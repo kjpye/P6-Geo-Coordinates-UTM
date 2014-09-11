@@ -1,5 +1,10 @@
 Revision history for Perl extension Geo::Coordinates::UTM.
 
+0.1.0 Thu Sep 11 00:35:48 2014
+	- original perl6 version based on perl 5 version 0.11
+
+Revision history for perl 5 version on which this versions is closely based:
+
 0.01  Wed Sep 27 12:37:38 2000
 	- original version; created by h2xs 1.19
         - All functions translated from original C code
