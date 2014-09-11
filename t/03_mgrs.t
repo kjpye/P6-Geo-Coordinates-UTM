@@ -1,39 +1,34 @@
 #!/usr/bin/perl
 
-use Test::More tests =>118;
-BEGIN { use_ok ('Geo::Coordinates::UTM'); }
+use Test;
 
-use constant maxerror => 1e-2;
+plan 118;
 
-use warnings;
-use strict;
+use Geo::Coordinates::UTM;
 
-sub fleq ($$;$) {
-    if (abs($_[0] - $_[1]) < maxerror) {
-        pass($_[2]);
+sub fleq (Real $a, Real $b, Real $eps = 1e-2) {
+    if (abs($a - $b) < $eps) {
+        return True;
     }
-    else {
-        fail($_[2]);
-        diag("floating point value $_[0] too different to reference $_[1]");
-    }
+    return False;
 }
 
 my $latlon = "CCDEFGHJKLMNPQRSTUVWXX";
 
-while(<DATA>) {
+for $=data.lines {
     chomp;
     next if /^\s*(?:#.*)?$/;
 
     my ($ellipsoid, $latitude, $longitude, $mgrs) = split /\|/;
     my ($m) = latlon_to_mgrs($ellipsoid, $latitude, $longitude);
-    is($m, $mgrs, "MGRS $.");
+    ok $m eq $mgrs, "MGRS $mgrs";
 
     my ($lat, $lon) = mgrs_to_latlon($ellipsoid, $m);
-    fleq($lon, $longitude, "longitude $.");
-    fleq($lat, $latitude, "latitude $.");
+    ok fleq($lon, $longitude), "longitude $longitude";
+    ok fleq($lat, $latitude),  "latitude $latitude";
 }
 
-__DATA__
+=begin data
 # ellipsoid|latitude|longitude|mgrs
 WGS-84|-15.038207087342|-169.633239244409|2LPJ4692336993
 Airy|-62.664347298066|-18.1318011641218|27EXL4689749077
@@ -74,3 +69,4 @@ Modified Fischer 1960|-50.2668337384696|137.577966166824|53FPE8371928502
 Modified Fischer 1960|-16.0823420814511|-30.9872437684145|25KGC1529720901
 Airy|-66.2328424771405|-54.6449818303734|21DXG0588052719
 Everest 1830 India|-6.84757411014701|39.7458086007605|37MEN8239243096
+=end data

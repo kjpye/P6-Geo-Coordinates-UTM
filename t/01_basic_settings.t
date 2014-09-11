@@ -1,34 +1,15 @@
-######################### We start with some black magic to print on failure.
+use v6;
+use Test;
 
-# Change 1..1 below to 1..last_test_to_print .
-# (It may become useful if the test is moved to ./t subdirectory.)
+plan 3;
 
-BEGIN { $| = 1; print "1..3\n"; }
-END {print "not ok 1\n" unless $loaded;}
-
-######################### End of black magic.
-
-# Insert your test code below (better if it prints "ok 13"
-# (correspondingly "not ok 13") depending on the success of chunk 13
-# of the test code):
+BEGIN { @*INC.push('../lib'); }
 use Geo::Coordinates::UTM;
-my ($zone,$east,$north);
-$loaded = 1;
-print "ok 1\n";
 
-if (($zone,$east,$north)=latlon_to_utm(5,57.833055556,-2.788951667)) {
-    $loaded = 1;
-    print "ok 2\n";
-} else {
-    $loaded = 0;
-    print "not ok 2\n";
-}
+ok True, "Module loaded";
 
-if (my($x,$y)=utm_to_latlon(5,$zone,$east,$north)) {
-    $loaded = 1;
-    print "ok 3\n";
-} else {
-    $loaded = 0;
-    print "not ok 3\n";
-}
+my (Str $zone, Real $east, Real $north);
 
+ok ($zone,$east,$north)=latlon_to_utm('WGS-84',57.833055556,-2.788951667), "latlon_to_utm available";
+
+ok utm_to_latlon('WGS-84',$zone,$east,$north), "utm_to_latlon available";

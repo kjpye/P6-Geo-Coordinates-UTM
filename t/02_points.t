@@ -1,52 +1,45 @@
-#!/usr/bin/perl
+use v6;
+use Test;
 
-use Test::More tests =>7993;
-BEGIN { use_ok ('Geo::Coordinates::UTM'); }
+plan 7993;
 
-use constant maxerror => 1e-2;
+BEGIN { @*INC.push('../lib'); }
 
-use warnings;
-use strict;
+use Geo::Coordinates::UTM;
 
-sub fleq ($$;$) {
-    if (abs($_[0] - $_[1]) < maxerror) {
-        pass($_[2]);
+sub fleq (Real $a, Real $b, Real $eps = 1e-2) {
+    if (abs($_[0] - $_[1]) < $eps) {
+        return True;
     }
-    else {
-        fail($_[2]);
-        diag("floating point value $_[0] too different to reference $_[1]");
-    }
+    return False;
 }
 
 my $latlon = "CCDEFGHJKLMNPQRSTUVWXX";
 
-while(<DATA>) {
-    chomp;
+for $=data.lines {
     next if /^\s*(?:#.*)?$/;
 
     my ($ellipsoid, $latitude, $longitude, $zone, $easting, $northing) = split /\|/;
     my ($z, $e, $n) = latlon_to_utm($ellipsoid, $latitude, $longitude);
-    is($z, $zone, "zone $.");
-    fleq($e, $easting, "easting $.");
-    fleq($n, $northing, "northing $.");
+    ok $z eq $zone, "zone $zone";
+    ok fleq($e, $easting),  "easting $easting";
+    ok fleq($n, $northing), "northing $northing";
 
     my ($lat, $lon) = utm_to_latlon($ellipsoid, $z, $easting, $northing);
-    fleq($lon, $longitude, "longitude $.");
-    fleq($lat, $latitude, "latitude $.");
+    ok fleq($lon, $longitude), "longitude $longitude";
+    ok fleq($lat, $latitude),  "latitude $latitude";
 
-    my ($zone_number, $zone_letter) = $zone =~ /^(\d+)(\w)/;
+    my ($zone_number, $zone_letter) = $zone ~~ /^(\d+)(\w)/;
     ($z, $e, $n) = latlon_to_utm_force_zone($ellipsoid, $zone_number, $latitude, $longitude);
-    is($z, $zone, "fz zone $.");
-    fleq($e, $easting, "fz easting $.");
-    fleq($n, $northing, "fz northing $.");
-
-
+    ok $z eq $zone, "fz zone $zone";
+    ok fleq($e, $easting),  "fz easting $easting";
+    ok fleq($n, $northing), "fz northing $northing";
 
     my $z1 = $zone_number + int(-2 + rand 5);
     $z1 -= 60 if $z1 > 60;
     $z1 += 60 if $z1 < 1;
 
-    # Removed these tersts because moving the UTM zone
+    # Removed these tests because moving the UTM zone
     # will give different results from the expected values 
     # and therefore tests will fail.
     #my $l1 = ($latlon =~ /(.)($zone_letter)(.)/, '')[rand(4)];
@@ -56,8 +49,7 @@ while(<DATA>) {
     #fleq($lat, $latitude, "fz latitude (zone $zone) $.");
 }
 
-
-__DATA__
+=begin data
 # ellipsoid|latitude|longitude|zone|easting|northing
 Bessel 1841 Nambia |-25.9668774017417|176.847283481794|60J|484713.786930711|7128217.21692427
 Airy|-62.6643472980663|-18.1318011641218|27E|646897.012158895|3049077.01849759
@@ -1058,3 +1050,4 @@ WGS-72|-47.0281479502178|-46.5424862445039|23G|382794.217541861|4790554.80309277
 South American 1969|79.731897849524|153.236500083527|56X|504706.321675731|8851702.74539223
 WGS 66|15.7447570785022|54.7411139932626|40P|257959.670828063|1741999.23736902
 GRS 1980|65.649537280093|120.849790726309|51W|401087.322895615|7282538.54147401
+=end data

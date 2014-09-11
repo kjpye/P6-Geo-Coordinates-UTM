@@ -1,8 +1,8 @@
-NAME
+#NAME
     Geo::Coordinates::UTM - Perl extension for Latitiude Longitude
     conversions.
 
-SYNOPSIS
+#SYNOPSIS
     use Geo::Coordinates::UTM;
 
 my ($zone,$easting,$northing)=latlon_to_utm($ellipsoid,$latitude,$longitude);
@@ -21,11 +21,11 @@ my @ellipsoids=ellipsoid_names;
 
 my($name, $r, $sqecc) = ellipsoid_info 'WGS-84';
 
-DESCRIPTION
+#DESCRIPTION
     This module will translate latitude longitude coordinates to Universal
     Transverse Mercator(UTM) coordinates and vice versa.
 
-  Mercator Projection
+##Mercator Projection
 
     The Mercator projection was first invented to help mariners. They needed
     to be able to take a course and know the distance traveled, and draw a
@@ -36,14 +36,14 @@ DESCRIPTION
     90 degree angle, thereby negating the problem that longitude lines get
     closer together at the poles.
 
-  Transverse Mercator Projection
+##Transverse Mercator Projection
 
     A Transverse Mercator projection takes the cylinder and turns it on its
     side. Now the cylinder's axis passes through the equator, and it can be
     rotated to line up with the area of interest. Many countries use
     Transverse Mercator for their grid systems.
 
-  Universal Transverse Mercator
+##Universal Transverse Mercator
 
     The Universal Transverse Mercator(UTM) system sets up a universal world
     wide system for mapping. The Transverse Mercator projection is used,
@@ -85,7 +85,7 @@ DESCRIPTION
     distortion at the zone boundary, 3 degrees away from the CM is
     approximately 1%.
 
-  Datums and Ellipsoids
+##Datums and Ellipsoids
 
     Unlike local surveys, which treat the Earth as a plane, the precise
     determination of the latitude and longitude of points over a broad area
@@ -100,11 +100,11 @@ DESCRIPTION
     data with two different Datum will not line up. The difference can be as
     much as a kilometer!
 
-EXAMPLES
+#EXAMPLES
     A description of the available ellipsoids and sample usage of the
     conversion routines follows
 
-  Ellipsoids
+##Ellipsoids
 
     The Ellipsoids available are as follows:
 
@@ -141,14 +141,14 @@ EXAMPLES
 	31 NAD 27
 	32 NAD 83
 
-  ellipsoid_names
+##ellipsoid_names
 
     The ellipsoids can be accessed using ellipsoid_names. To store thes into
     an array you could use
 
          my @names = ellipsoid_names;
 
-  ellipsoid_info
+##ellipsoid_info
 
     Ellipsoids may be called either by name, or number. To return the
     ellipsoid information, ( "official" name, equator radius and square
@@ -162,7 +162,7 @@ EXAMPLES
          my($name, $r, $sqecc) = ellipsoid_info 'WGS-84 (new specs)';
          my($name, $r, $sqecc) = ellipsoid_info 23;
 
-  latlon_to_utm
+##latlon_to_utm
 
     Latitude values in the southern hemisphere should be supplied as
     negative values (e.g. 30 deg South will be -30). Similarly Longitude
@@ -187,7 +187,7 @@ EXAMPLES
          $east  = 512533.364651484
          $north = 6409932.13416127
 
-  utm_to_latlon
+##utm_to_latlon
 
     Reversing the above example,
 
@@ -203,7 +203,7 @@ EXAMPLES
          latitude  57deg 49min 59.000sec North
          longitude 02deg 47min 20.226sec West
 
-  latlon_to_utm_force_zone
+##latlon_to_utm_force_zone
 
     On occasions, it is necessary to map a pair of (latitude, longitude)
     coordinates to a predefined zone. This function allows to select the
@@ -270,10 +270,10 @@ EXAMPLES
     Similarly it is possible to convert MGRS directly to UTM
 
 
-AUTHOR
+#AUTHOR
     Graham Crookham, grahamc@cpan.org
 
-THANKS
+#THANKS
     Thanks go to the following:
 
     Felipe Mendonca Pimenta for helping out with the Southern hemisphere
@@ -291,7 +291,7 @@ THANKS
 
     Peder Stray for the short MGRS patch
 
-COPYRIGHT
+#COPYRIGHT
     Copyright (c) 2000,2002,2004,2007,2010,2013 by Graham Crookham. All rights reserved.
 
     This package is free software; you can redistribute it and/or modify it
