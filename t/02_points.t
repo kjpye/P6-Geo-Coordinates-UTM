@@ -1,14 +1,14 @@
 use v6;
-use Test;
+use Test; 
 
-plan 7993;
+plan 7992;
 
 BEGIN { @*INC.push('../lib'); }
 
 use Geo::Coordinates::UTM;
 
-sub fleq (Real $a, Real $b, Real $eps = 1e-2) {
-    if (abs($_[0] - $_[1]) < $eps) {
+sub fleq ($a, $b, Real $eps = 1e-2) {
+    if (abs($a - $b) < $eps) {
         return True;
     }
     return False;
@@ -16,40 +16,7 @@ sub fleq (Real $a, Real $b, Real $eps = 1e-2) {
 
 my $latlon = "CCDEFGHJKLMNPQRSTUVWXX";
 
-for $=data.lines {
-    next if /^\s*(?:#.*)?$/;
-
-    my ($ellipsoid, $latitude, $longitude, $zone, $easting, $northing) = split /\|/;
-    my ($z, $e, $n) = latlon_to_utm($ellipsoid, $latitude, $longitude);
-    ok $z eq $zone, "zone $zone";
-    ok fleq($e, $easting),  "easting $easting";
-    ok fleq($n, $northing), "northing $northing";
-
-    my ($lat, $lon) = utm_to_latlon($ellipsoid, $z, $easting, $northing);
-    ok fleq($lon, $longitude), "longitude $longitude";
-    ok fleq($lat, $latitude),  "latitude $latitude";
-
-    my ($zone_number, $zone_letter) = $zone ~~ /^(\d+)(\w)/;
-    ($z, $e, $n) = latlon_to_utm_force_zone($ellipsoid, $zone_number, $latitude, $longitude);
-    ok $z eq $zone, "fz zone $zone";
-    ok fleq($e, $easting),  "fz easting $easting";
-    ok fleq($n, $northing), "fz northing $northing";
-
-    my $z1 = $zone_number + int(-2 + rand 5);
-    $z1 -= 60 if $z1 > 60;
-    $z1 += 60 if $z1 < 1;
-
-    # Removed these tests because moving the UTM zone
-    # will give different results from the expected values 
-    # and therefore tests will fail.
-    #my $l1 = ($latlon =~ /(.)($zone_letter)(.)/, '')[rand(4)];
-    #($z, $e, $n) = latlon_to_utm_force_zone($ellipsoid, "$z1$l1", $latitude, $longitude);
-    #($lat, $lon) = utm_to_latlon($ellipsoid, $z, $e, $n);
-    #fleq($lon, $longitude, "fz longitude (zone $zone) $.");
-    #fleq($lat, $latitude, "fz latitude (zone $zone) $.");
-}
-
-=begin data
+my $data = ' #
 # ellipsoid|latitude|longitude|zone|easting|northing
 Bessel 1841 Nambia |-25.9668774017417|176.847283481794|60J|484713.786930711|7128217.21692427
 Airy|-62.6643472980663|-18.1318011641218|27E|646897.012158895|3049077.01849759
@@ -1050,4 +1017,43 @@ WGS-72|-47.0281479502178|-46.5424862445039|23G|382794.217541861|4790554.80309277
 South American 1969|79.731897849524|153.236500083527|56X|504706.321675731|8851702.74539223
 WGS 66|15.7447570785022|54.7411139932626|40P|257959.670828063|1741999.23736902
 GRS 1980|65.649537280093|120.849790726309|51W|401087.322895615|7282538.54147401
-=end data
+';
+
+for $data.lines -> $line {
+    next if $line ~~ /^\s* '#' /;
+
+    my (Str $ellipsoid, $la, $lo, Str $zone, $ea, $no) = $line.split('|');
+    my Real $latitude = $la.Real;
+    my Real $longitude = $lo.Real;
+    my Real $easting = $ea.Real;
+    my Real $northing = $no.Real;
+    my (Str $z, Real $e, Real $n) = latlon_to_utm($ellipsoid, $latitude.Real, $longitude.Real);
+    ok $z eq $zone, "zone $zone";
+    ok fleq($e, $easting),  "easting $easting";
+    ok fleq($n, $northing), "northing $northing";
+
+    my ($lat, $lon) = utm_to_latlon($ellipsoid, $z, $easting, $northing);
+    ok fleq($lon, $longitude), "longitude $longitude";
+    ok fleq($lat, $latitude),  "latitude $latitude";
+
+    $zone ~~ m/^ (\d+) (\w) /;
+    my ($zone_number, $zone_letter) = ($/[0].Str, $/[1].Str);
+    ($z, $e, $n) = latlon_to_utm_force_zone($ellipsoid, $zone_number, $latitude, $longitude);
+    ok $z eq $zone, "fz zone $zone";
+    ok fleq($e, $easting),  "fz easting $easting";
+    ok fleq($n, $northing), "fz northing $northing";
+
+    my $z1 = $zone_number + (-2 + 5.rand).Int;
+    $z1 -= 60 if $z1 > 60;
+    $z1 += 60 if $z1 < 1;
+
+    # Removed these tests because moving the UTM zone
+    # will give different results from the expected values 
+    # and therefore tests will fail.
+    #my $l1 = ($latlon =~ /(.)($zone_letter)(.)/, '')[4.rand];
+    #($z, $e, $n) = latlon_to_utm_force_zone($ellipsoid, "$z1$l1", $latitude, $longitude);
+    #($lat, $lon) = utm_to_latlon($ellipsoid, $z, $e, $n);
+    #fleq($lon, $longitude, "fz longitude (zone $zone) $.");
+    #fleq($lat, $latitude, "fz latitude (zone $zone) $.");
+}
+

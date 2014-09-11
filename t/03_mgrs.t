@@ -2,11 +2,12 @@
 
 use Test;
 
-plan 118;
+plan 117;
 
+BEGIN { @*INC.push('../lib'); }
 use Geo::Coordinates::UTM;
 
-sub fleq (Real $a, Real $b, Real $eps = 1e-2) {
+sub fleq ($a, $b, Real $eps = 1e-2) {
     if (abs($a - $b) < $eps) {
         return True;
     }
@@ -15,21 +16,7 @@ sub fleq (Real $a, Real $b, Real $eps = 1e-2) {
 
 my $latlon = "CCDEFGHJKLMNPQRSTUVWXX";
 
-for $=data.lines {
-    chomp;
-    next if /^\s*(?:#.*)?$/;
-
-    my ($ellipsoid, $latitude, $longitude, $mgrs) = split /\|/;
-    my ($m) = latlon_to_mgrs($ellipsoid, $latitude, $longitude);
-    ok $m eq $mgrs, "MGRS $mgrs";
-
-    my ($lat, $lon) = mgrs_to_latlon($ellipsoid, $m);
-    ok fleq($lon, $longitude), "longitude $longitude";
-    ok fleq($lat, $latitude),  "latitude $latitude";
-}
-
-=begin data
-# ellipsoid|latitude|longitude|mgrs
+my $data = '# ellipsoid|latitude|longitude|mgrs
 WGS-84|-15.038207087342|-169.633239244409|2LPJ4692336993
 Airy|-62.664347298066|-18.1318011641218|27EXL4689749077
 Bessel 1841 Nambia|-25.9668774017417|176.847283481794|60JVS8471328217
@@ -69,4 +56,18 @@ Modified Fischer 1960|-50.2668337384696|137.577966166824|53FPE8371928502
 Modified Fischer 1960|-16.0823420814511|-30.9872437684145|25KGC1529720901
 Airy|-66.2328424771405|-54.6449818303734|21DXG0588052719
 Everest 1830 India|-6.84757411014701|39.7458086007605|37MEN8239243096
-=end data
+';
+
+for $data.lines -> $line {
+    next if $line ~~ /^ \s* '#' /;
+
+
+    my ($ellipsoid, $latitude, $longitude, $mgrs) = $line.split('|');
+    my ($m) = latlon_to_mgrs($ellipsoid.Str, $latitude.Real, $longitude.Real);
+    ok $m eq $mgrs, "MGRS $mgrs";
+
+    my ($lat, $lon) = mgrs_to_latlon($ellipsoid, $m);
+    ok fleq($lon, $longitude), "longitude $longitude";
+    ok fleq($lat, $latitude),  "latitude $latitude";
+}
+

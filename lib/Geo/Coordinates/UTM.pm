@@ -121,7 +121,7 @@ sub latlon_to_utm_force_zone(Str $ellips, Str $zone, Real $latitude, Real $longi
     my $long2 = $longitude - (($longitude + 180)/360).Int * 360;
 
     $zone ~~ m:i/ ^ (\d+) <[CDEFGHJKLMNPQRSTUVWX]> ? $ /;
-    my $zone_number = $/[0];
+    my $zone_number = ~$/[0];
 
     die "Zone value ($zone) invalid."
         unless $zone_number.defined && $zone_number <= 60;
@@ -285,8 +285,8 @@ sub utm_to_mgrs(Str $zone, Real $easting, Real $northing) is export {
    my $rnd_east       = sprintf("%d",$easting);
    my $east_split     = $rnd_east.chars-5;
       $east_split     = 0 if $east_split < 0;
-   my $mgrs_east      = $rnd_east.substr(($rnd_east.chars-5), *);
-   my $num_east       = $rnd_east.substr(0,($rnd_east.chars-5));
+   my $mgrs_east      = $rnd_east.substr($rnd_east.chars-5, Inf);
+   my $num_east       = $rnd_east.substr(0, $rnd_east.chars-5);
       $num_east       = 0 if not $num_east;
    my $mgrs_zone      = $zone_number;
       $mgrs_zone     -= 3 until $mgrs_zone < 4;
@@ -312,7 +312,7 @@ sub latlon_to_mgrs(Str $ellips, Real $latitude, Real $longitude) is export {
 }
 
 
-sub mgrs_to_utm(Str $mgrs_string) is export {
+sub mgrs_to_utm(Str $mgrs_string is copy) is export {
    my $zone            = $mgrs_string.substr(0,2);
       $mgrs_string     = "0" ~ $mgrs_string if $zone !~~ /^\d+$/;
       $zone            = $mgrs_string.substr(0,3);
@@ -333,14 +333,14 @@ sub mgrs_to_utm(Str $mgrs_string) is export {
    die "MGRS zone ($second_letter) invalid."
      unless $second_letter ~~ /<[ABCDEFGHJKLMNPQRSTUV]>/;
 
-   my $coords    = $mgrs_string.substr(5, *);
+   my $coords    = $mgrs_string.substr(5, Inf);
    my $coord_len = $coords.chars;
    die "MGRS coords ($coords) invalid."
      unless (0 < $coord_len <= 10) and !($coord_len % 2);
    
    $coord_len  = ($coord_len/2).Int;
    my $x_coord = $coords.substr(0,$coord_len);
-   my $y_coord = $coords.substr($coord_len, *);
+   my $y_coord = $coords.substr($coord_len, Inf);
    $x_coord   *= 10 ** (5 - $coord_len);
    $y_coord   *= 10 ** (5 - $coord_len);
 
