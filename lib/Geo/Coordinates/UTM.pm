@@ -144,9 +144,26 @@ sub _latlon_zone_number(Real $latitude, Real $long2) {
     return $zone;
 }
 
+my $lastellips = '';
+my ($name, $eccentricity, $radius);
+my $eccentprime;
+my ($k1, $k2, $k3, $k4);
+
 sub _latlon_to_utm(Str $ellips, Str $zone is copy, Real $latitude, Real $long2) {
-    my ($name, $radius, $eccentricity) = ellipsoid_info $ellips
-        or die "Ellipsoid value ($ellips) invalid.";
+    if $ellips ne $lastellips {
+        ($name, $radius, $eccentricity) = ellipsoid_info $ellips
+            or die "Ellipsoid value ($ellips) invalid.";
+        $eccentprime      = $eccentricity / (1 - $eccentricity);
+        $k1 = $radius * ( 1 - $eccentricity/4
+                - 3 * $eccentricity * $eccentricity / 64
+                - 5 * $eccentricity * $eccentricity * $eccentricity/ 256);
+        $k2 =  $radius * (3 * $eccentricity / 8
+            +  3 * $eccentricity * $eccentricity / 32
+            + 45 * $eccentricity * $eccentricity * $eccentricity / 1024);
+        $k3 = $radius * (15 * $eccentricity * $eccentricity / 256
+            + 45 * $eccentricity * $eccentricity * $eccentricity / 1024);
+        $k4 = $radius * (35 * $eccentricity * $eccentricity * $eccentricity / 3072);
+    }
 
     my $lat_radian       = $deg2rad * $latitude;
     my $long_radian      = $deg2rad * $long2;
@@ -155,25 +172,16 @@ sub _latlon_to_utm(Str $ellips, Str $zone is copy, Real $latitude, Real $long2) 
 
     my $longorigin       = ($zone - 1)*6 - 180 + 3;
     my $longoriginradian = $deg2rad * $longorigin;
-    my $eccentprime      = $eccentricity / (1 - $eccentricity);
     
     my $N = $radius / sqrt(1-$eccentricity * sin($lat_radian)*sin($lat_radian));
     my $T = tan($lat_radian) * tan($lat_radian);
     my $C = $eccentprime * cos($lat_radian)*cos($lat_radian);
     my $A = cos($lat_radian) * ($long_radian - $longoriginradian);
-    my $M = $radius
-            * ( ( 1 - $eccentricity/4 - 3 * $eccentricity * $eccentricity/64
-                  - 5 * $eccentricity * $eccentricity * $eccentricity/256
-                ) * $lat_radian
-              - ( 3 * $eccentricity/8 + 3 * $eccentricity * $eccentricity/32
-                  + 45 * $eccentricity * $eccentricity * $eccentricity/1024
-                ) * sin(2 * $lat_radian)
-              + ( 15 * $eccentricity * $eccentricity/256 +
-                  45 * $eccentricity * $eccentricity * $eccentricity/1024
-                ) * sin(4 * $lat_radian)
-              - ( 35 * $eccentricity * $eccentricity * $eccentricity/3072
-                ) * sin(6 * $lat_radian)
-              );
+    my$M = $k1 * $lat_radian
+         - $k2 * sin(2 * $lat_radian)
+         + $k3 * sin(4 * $lat_radian)
+         - $k4 * sin(6 * $lat_radian)
+         ;
 
     my $utm_easting  = $k0*$N*($A+(1-$T+$C)*$A*$A*$A/6
                      + (5-18*$T+$T*$T+72*$C-58*$eccentprime)*$A*$A*$A*$A*$A/120)
@@ -392,7 +400,7 @@ sub mgrs_to_latlon(Str $ellips, Str $mgrs_string) is export {
    ($latitude,$longitude);
 }
 
-=begin finish
+=begin pod
 =head1 NAME
 
 Geo::Coordinates::UTM - Perl extension for Latitiude Longitude conversions.
@@ -693,5 +701,4 @@ Copyright (c) 2000,2002,2004,2007,2010,2013 by Graham Crookham.  All rights rese
 This package is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.             
 
-=cut
-
+=end pod
