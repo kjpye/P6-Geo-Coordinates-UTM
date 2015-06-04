@@ -104,29 +104,23 @@ sub ellipsoid_info(Str $id) is export {
 # (Latitude and Longitude in decimal degrees)
 # Returns UTM Zone, UTM Easting, UTM Northing
 
-sub latlon_to_utm(Str $ellips, Real $latitude, Real $longitude) is export {
+sub latlon_to_utm(Str $ellips, Real $latitude, Real $longitude, Str :$zone) is export {
     die "Longitude value ($longitude) invalid."
         unless -180 <= $longitude <= 180;
 
     my $long2 = $longitude - (($longitude + 180)/360).Int * 360;
-    my Str $zone  = _latlon_zone_number($latitude, $long2).Str;
+
+    if $zone.defined {
+        $zone ~~ m:i/ ^ (\d+) <[CDEFGHJKLMNPQRSTUVWX]> ? $ /;
+        my $zone_number = ~$/[0];
+
+        die "Zone value ($zone) invalid."
+            unless $zone_number.defined && $zone_number <= 60;
+    } else {
+        $zone  = _latlon_zone_number($latitude, $long2).Str; 
+    }
 
     _latlon_to_utm($ellips, $zone, $latitude, $long2);
-}
-
-sub latlon_to_utm_force_zone(Str $ellips, Str $zone, Real $latitude, Real $longitude) is export {
-    die "Longitude value ($longitude) invalid."
-        unless -180 <= $longitude <= 180;
-
-    my $long2 = $longitude - (($longitude + 180)/360).Int * 360;
-
-    $zone ~~ m:i/ ^ (\d+) <[CDEFGHJKLMNPQRSTUVWX]> ? $ /;
-    my $zone_number = ~$/[0];
-
-    die "Zone value ($zone) invalid."
-        unless $zone_number.defined && $zone_number <= 60;
-
-    _latlon_to_utm($ellips, $zone_number, $latitude, $long2);
 }
 
 sub _latlon_zone_number(Real $latitude, Real $long2) {

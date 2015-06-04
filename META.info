@@ -4,5 +4,8 @@
     "description" : "Convert LatLon to UTM and vice versa",
     "author"      : "Kevin Pye (Kevin.Pye@gmail.com)",
     "depends"     : [],
+    "provides"    : {
+        "Geo::Coordinates::UTM" : "lib/Geo/Coordinates/UTM.pm"
+    },
     "source-url"  : "https://github.com/kjpye/P6-Geo-Coordinates-UTM"
 }

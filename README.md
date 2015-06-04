@@ -4,7 +4,7 @@ Geo::Coordinates::UTM - Perl extension for Latitiude Longitude conversions.
 #SYNOPSIS
 use Geo::Coordinates::UTM;
 
-my ($zone,$easting,$northing)=latlon_to_utm($ellipsoid,$latitude,$longitude);
+my ($zone,$easting,$northing)=latlon_to_utm($ellipsoid,$latitude,$longitude[,zone=>$zone]);
 
 my ($latitude,$longitude)=utm_to_latlon($ellipsoid,$zone,$easting,$northing);
 
@@ -186,29 +186,11 @@ returns
      $east  = 512533.364651484
      $north = 6409932.13416127
 
-##utm_to_latlon
-
-Reversing the above example,
-
-     ($latitude,$longitude)=utm_to_latlon(5,30V,512533.364651484,6409932.13416127)
-
-returns
-
-     $latitude  = 57.8330555601433
-     $longitude = -2.788951666974
-
-which equates to
-
-     latitude  57deg 49min 59.000sec North
-     longitude 02deg 47min 20.226sec West
-
-##latlon_to_utm_force_zone
-
 On occasions, it is necessary to map a pair of (latitude, longitude)
 coordinates to a predefined zone. This function allows to select the
-projection zone as follows:
+projection zone using an optional named parameter as follows:
 
-     ($zone, $east, $north)=latlon_to_utm('international', $zone_number,
+     ($zone, $east, $north)=latlon_to_utm('international', zone => $zone_number,
                                       $latitude, $longitude)
 
 For instance, Spain territory goes over zones 29, 30 and 31 but
@@ -227,14 +209,30 @@ returns
 
 but forcing the conversion to zone 30:
 
-    ($zone, $east, $norh)=latlon_to_utm_force_zone('international',
-                                                   30, 42.882517, -8.541306)
+    ($zone, $east, $norh)=latlon_to_utm('international',
+                                        zone => 30, 42.882517, -8.541306)
 
 returns
 
     $zone = 30T
     $east = 47404.442
     $north = 4762771.704
+
+##utm_to_latlon
+
+Reversing the above example,
+
+     ($latitude,$longitude)=utm_to_latlon(5,30V,512533.364651484,6409932.13416127)
+
+returns
+
+     $latitude  = 57.8330555601433
+     $longitude = -2.788951666974
+
+which equates to
+
+     latitude  57deg 49min 59.000sec North
+     longitude 02deg 47min 20.226sec West
 
 ##latlon_to_mgrs
 
