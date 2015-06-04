@@ -2,7 +2,7 @@ use v6;
 
 # Based on the perl 5 module of the same name. All mistakes are mine.
 
-class Geo::Coordinates::UTM;
+unit class Geo::Coordinates::UTM;
 
 my $deg2rad =  pi / 180;
 my $rad2deg = 180 /  pi;
@@ -104,7 +104,7 @@ sub ellipsoid_info(Str $id) is export {
 # (Latitude and Longitude in decimal degrees)
 # Returns UTM Zone, UTM Easting, UTM Northing
 
-sub latlon_to_utm(Str $ellips, Real $latitude, Real $longitude, Str :$zone) is export {
+sub latlon_to_utm(Str $ellips, Real $latitude, Real $longitude, Str :$zone is copy) is export {
     die "Longitude value ($longitude) invalid."
         unless -180 <= $longitude <= 180;
 

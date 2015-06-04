@@ -1038,7 +1038,7 @@ for $data.lines -> $line {
 
     $zone ~~ m/^ (\d+) (\w) /;
     my ($zone_number, $zone_letter) = ($/[0].Str, $/[1].Str);
-    ($z, $e, $n) = latlon_to_utm_force_zone($ellipsoid, zone => $zone_number, $latitude, $longitude);
+    ($z, $e, $n) = latlon_to_utm($ellipsoid, zone => $zone_number, $latitude, $longitude);
     ok $z eq $zone, "fz zone $zone";
     ok fleq($e, $easting),  "fz easting $easting";
     ok fleq($n, $northing), "fz northing $northing";
@@ -1051,7 +1051,7 @@ for $data.lines -> $line {
     # will give different results from the expected values 
     # and therefore tests will fail.
     #my $l1 = ($latlon =~ /(.)($zone_letter)(.)/, '')[4.rand];
-    #($z, $e, $n) = latlon_to_utm_force_zone($ellipsoid, zone => "$z1$l1", $latitude, $longitude);
+    #($z, $e, $n) = latlon_to_utm($ellipsoid, zone => "$z1$l1", $latitude, $longitude);
     #($lat, $lon) = utm_to_latlon($ellipsoid, $z, $e, $n);
     #fleq($lon, $longitude, "fz longitude (zone $zone) $.");
     #fleq($lat, $latitude, "fz latitude (zone $zone) $.");
