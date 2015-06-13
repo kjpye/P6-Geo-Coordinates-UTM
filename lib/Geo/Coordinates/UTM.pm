@@ -109,18 +109,19 @@ sub latlon_to_utm(Str $ellips, Real $latitude, Real $longitude, Str :$zone is co
         unless -180 <= $longitude <= 180;
 
     my $long2 = $longitude - (($longitude + 180)/360).Int * 360;
+    my $zone_number;
 
     if $zone.defined {
         $zone ~~ m:i/ ^ (\d+) <[CDEFGHJKLMNPQRSTUVWX]> ? $ /;
-        my $zone_number = ~$/[0];
+        $zone_number = ~$/[0];
 
         die "Zone value ($zone) invalid."
             unless $zone_number.defined && $zone_number <= 60;
     } else {
-        $zone  = _latlon_zone_number($latitude, $long2).Str; 
+        $zone_number  = _latlon_zone_number($latitude, $long2).Str; 
     }
 
-    _latlon_to_utm($ellips, $zone, $latitude, $long2);
+    _latlon_to_utm($ellips, $zone_number, $latitude, $long2);
 }
 
 sub _latlon_zone_number(Real $latitude, Real $long2) {
@@ -135,7 +136,7 @@ sub _latlon_zone_number(Real $latitude, Real $long2) {
                  !! (33.0 <= $long2 < 42.0) ?? 37
 		 !!                            $zone;
     }
-    return $zone;
+    $zone;
 }
 
 my $lastellips = '';
