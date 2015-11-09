@@ -68,7 +68,7 @@ BEGIN {  # Initialize this before other modules get a chance
 	
 
   for @Ellipsoid -> $el {
-      my ($name, $eqrad, $eccsq) = @$el;
+      my (Str $name, Real $eqrad, Real $eccsq) = @$el;
       %Ellipsoid{$name} = $el;
       %Ellipsoid{_cleanup_name $name} = $el;
   }
@@ -86,11 +86,11 @@ sub ellipsoid_names() is export {
 # Returns "official" name, equator radius and square eccentricity
 # The specified name can be numeric (for compatibility reasons) or
 # a more-or-less exact name
-# Examples:   my($name, $r, $sqecc) = ellipsoid_info 'wgs84';
-#             my($name, $r, $sqecc) = ellipsoid_info 'WGS 84';
-#             my($name, $r, $sqecc) = ellipsoid_info 'WGS-84';
-#             my($name, $r, $sqecc) = ellipsoid_info 'WGS-84 (new specs)';
-#             my($name, $r, $sqecc) = ellipsoid_info 22;
+# Examples:   my($name, $r, $sqecc) = |ellipsoid_info 'wgs84';
+#             my($name, $r, $sqecc) = |ellipsoid_info 'WGS 84';
+#             my($name, $r, $sqecc) = |ellipsoid_info 'WGS-84';
+#             my($name, $r, $sqecc) = |ellipsoid_info 'WGS-84 (new specs)';
+#             my($name, $r, $sqecc) = |ellipsoid_info 22;
 
 sub ellipsoid_info(Str $id) is export {
     my $el = $id !~~ m/\D/
@@ -146,7 +146,7 @@ my ($k1, $k2, $k3, $k4);
 
 sub _latlon_to_utm(Str $ellips, Str $zone is copy, Real $latitude, Real $long2) {
     if $ellips ne $lastellips {
-        ($name, $radius, $eccentricity) = ellipsoid_info $ellips
+        ($name, $radius, $eccentricity) = |ellipsoid_info $ellips
             or die "Ellipsoid value ($ellips) invalid.";
         $eccentprime      = $eccentricity / (1 - $eccentricity);
         $k1 = $radius * ( 1 - $eccentricity/4
@@ -219,14 +219,12 @@ sub _latlon_to_utm(Str $ellips, Str $zone is copy, Real $latitude, Real $long2) 
 # (Latitude and Longitude in decimal degrees, UTM Zone e.g. 23S)
 
 sub utm_to_latlon(Str $ellips, Str $zone, Real $easting, Real $northing) is export {
-    my ($name, $radius, $eccentricity) = ellipsoid_info $ellips
+    my ($name, $radius, $eccentricity) = |ellipsoid_info $ellips
         or die "Ellipsoid value ($ellips) invalid.";
        
-    my $zone_number     = $zone;
-    my Str $zone_letter = $zone_number;
-    $zone_number       ~~ s/^(\d+)(.*)//;
-    $zone_number        = $/[0];
-    $zone_letter        = $/[1].Str;
+    $zone              ~~ /^(\d+)(.*)/;
+    my $zone_number     = $/[0];
+    my Str $zone_letter = $/[1].Str.uc;
 
     die "UTM zone ($zone_letter) invalid."
        unless _valid_utm_zone $zone_letter;
@@ -235,9 +233,10 @@ sub utm_to_latlon(Str $ellips, Str $zone, Real $easting, Real $northing) is expo
     my $x  = $easting - 500000; # Remove Longitude offset
     my $y  = $northing;
 
-    # Set hemisphere (1=Northern, 0=Southern)
-    my $hemisphere = $zone_letter ge 'N';
-    $y            -= 10000000.0 unless $hemisphere; # Remove Southern Offset
+    # Set hemisphere
+    my $southernhemi = $zone_letter lt 'N';
+    #$southernhemi = True if $zone_letter eq 'N'; # Yes, this line is necessary
+    $y            -= 10000000.0 if $southernhemi; # Remove Southern Offset
 
     my $longorigin      = ($zone_number - 1)*6 - 180 + 3;
     my $eccPrimeSquared = ($eccentricity)/(1-$eccentricity);
@@ -309,7 +308,7 @@ sub utm_to_mgrs(Str $zone, Real $easting, Real $northing) is export {
 }
 
 sub latlon_to_mgrs(Str $ellips, Real $latitude, Real $longitude) is export {
-    my ($zone,$x_coord,$y_coord) = latlon_to_utm($ellips, $latitude, $longitude);
+    my ($zone,$x_coord,$y_coord) = |latlon_to_utm($ellips, $latitude, $longitude);
     my $mgrs_string              = utm_to_mgrs($zone,$x_coord,$y_coord);
     ($mgrs_string);
 }
@@ -390,8 +389,8 @@ sub mgrs_to_utm(Str $mgrs_string is copy) is export {
 }
 
 sub mgrs_to_latlon(Str $ellips, Str $mgrs_string) is export {
-   my ($zone,$x_coord,$y_coord) = mgrs_to_utm($mgrs_string);
-   my ($latitude,$longitude)    = utm_to_latlon($ellips,$zone,$x_coord,$y_coord);
+   my ($zone,$x_coord,$y_coord) = |mgrs_to_utm($mgrs_string);
+   my ($latitude,$longitude)    = |utm_to_latlon($ellips,$zone,$x_coord,$y_coord);
    ($latitude,$longitude);
 }
 
