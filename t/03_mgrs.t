@@ -4,7 +4,7 @@ use Test;
 
 plan 117;
 
-BEGIN { @*INC.push('../lib'); }
+# BEGIN { @*INC.push('../lib'); }
 use Geo::Coordinates::UTM;
 
 sub fleq ($a, $b, Real $eps = 1e-2) {

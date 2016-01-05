@@ -2,397 +2,407 @@ use v6;
 
 # Based on the perl 5 module of the same name. All mistakes are mine.
 
-unit class Geo::Coordinates::UTM;
+module Geo::Coordinates::UTM {
 
-my $deg2rad =  pi / 180;
-my $rad2deg = 180 /  pi;
-
-# remove all markup from an ellipsoid name, to increase the chance
-# that a match is found.
-sub _cleanup_name(Str $copy is copy) {
-    $copy .= lc;
-    $copy ~~ s:g/ \( <[-)]>* \) //;   # remove text between parantheses
-    $copy ~~ s:g/ <[\s-]> //;         # no blanks or dashes
-    return $copy;
-}
-
-# Ellipsoid array (name,equatorial radius,square of eccentricity)
-# Same data also as hash with key eq name (in variations)
-
-my (@Ellipsoid, %Ellipsoid);
-
-
-BEGIN {  # Initialize this before other modules get a chance
-   @Ellipsoid =
-    ( [ "Airy", 6377563, 0.00667054]
-    , [ "Australian National", 6378160, 0.006694542]
-    , [ "Bessel 1841", 6377397, 0.006674372]
-    , [ "Bessel 1841 Nambia", 6377484, 0.006674372]
-    , [ "Clarke 1866", 6378206, 0.006768658]
-    , [ "Clarke 1880", 6378249, 0.006803511]
-    , [ "Everest 1830 India", 6377276, 0.006637847]
-    , [ "Fischer 1960 Mercury", 6378166, 0.006693422]
-    , [ "Fischer 1968", 6378150, 0.006693422]
-    , [ "GRS 1967", 6378160, 0.006694605]
-    , [ "GRS 1980", 6378137, 0.00669438]
-    , [ "Helmert 1906", 6378200, 0.006693422]
-    , [ "Hough", 6378270, 0.00672267]
-    , [ "International", 6378388, 0.00672267]
-    , [ "Krassovsky", 6378245, 0.006693422]
-    , [ "Modified Airy", 6377340, 0.00667054]
-    , [ "Modified Everest", 6377304, 0.006637847]
-    , [ "Modified Fischer 1960", 6378155, 0.006693422]
-    , [ "South American 1969", 6378160, 0.006694542]
-    , [ "WGS 60", 6378165, 0.006693422]
-    , [ "WGS 66", 6378145, 0.006694542]
-    , [ "WGS-72", 6378135, 0.006694318]
-    , [ "WGS-84", 6378137, 0.00669438 ]
-    , [ "Everest 1830 Malaysia", 6377299, 0.006637847]
-    , [ "Everest 1956 India", 6377301, 0.006637847]
-    , [ "Everest 1964 Malaysia and Singapore", 6377304, 0.006637847]
-    , [ "Everest 1969 Malaysia", 6377296, 0.006637847]
-    , [ "Everest Pakistan", 6377296, 0.006637534]
-    , [ "Indonesian 1974", 6378160, 0.006694609]
-    , [ "Arc 1950", 6378249.145,0.006803481]
-    , [ "NAD 27",6378206.4,0.006768658]
-    , [ "NAD 83",6378137,0.006694384]
-    );
-
-# calc ecc  as  
-# a = semi major axis
-# b = semi minor axis
-# e^2 = (a^2-b^2)/a^2	
-# For clarke 1880 (Arc1950) a=6378249.145 b=6356514.966398753
-# e^2 (40682062155693.23 - 40405282518051.34) / 40682062155693.23
-# e^2 = 0.0068034810178165
-	
-
-  for @Ellipsoid -> $el {
-      my (Str $name, Real $eqrad, Real $eccsq) = @$el;
-      %Ellipsoid{$name} = $el;
-      %Ellipsoid{_cleanup_name $name} = $el;
-  }
-}
-
-sub _valid_utm_zone(Str $char) {
-    ? $char ~~ /<[CDEFGHJKLMNPQRSTUVWX]>/;
-}
-
-# Returns all pre-defined ellipsoid names, sorted alphabetically
-sub ellipsoid_names() is export {
-    @Ellipsoid ==> map { .[0] };
-}
-
-# Returns "official" name, equator radius and square eccentricity
-# The specified name can be numeric (for compatibility reasons) or
-# a more-or-less exact name
-# Examples:   my($name, $r, $sqecc) = |ellipsoid_info 'wgs84';
-#             my($name, $r, $sqecc) = |ellipsoid_info 'WGS 84';
-#             my($name, $r, $sqecc) = |ellipsoid_info 'WGS-84';
-#             my($name, $r, $sqecc) = |ellipsoid_info 'WGS-84 (new specs)';
-#             my($name, $r, $sqecc) = |ellipsoid_info 22;
-
-sub ellipsoid_info(Str $id) is export {
-    my $el = $id !~~ m/\D/
-           ?? @Ellipsoid[$id-1]   # old system counted from 1
-           !! @Ellipsoid{$id} || %Ellipsoid{_cleanup_name $id};
-
-    $el.defined ?? @$el !! ();
-}
-
-# Expects Ellipsoid Number or name, Latitude, Longitude 
-# (Latitude and Longitude in decimal degrees)
-# Returns UTM Zone, UTM Easting, UTM Northing
-
-sub latlon_to_utm(Str $ellips, Real $latitude, Real $longitude, Str :$zone is copy) is export {
-    die "Longitude value ($longitude) invalid."
-        unless -180 <= $longitude <= 180;
-
-    my $long2 = $longitude - (($longitude + 180)/360).Int * 360;
-    my $zone_number;
-
-    if $zone.defined {
-        $zone ~~ m:i/ ^ (\d+) <[CDEFGHJKLMNPQRSTUVWX]> ? $ /;
-        $zone_number = ~$/[0];
-
-        die "Zone value ($zone) invalid."
-            unless $zone_number.defined && $zone_number <= 60;
-    } else {
-        $zone_number  = _latlon_zone_number($latitude, $long2).Str; 
-    }
-
-    _latlon_to_utm($ellips, $zone_number, $latitude, $long2);
-}
-
-sub _latlon_zone_number(Real $latitude, Real $long2) {
-    my $zone = ( ($long2 + 180)/6).Int + 1;
-    if 56 <= $latitude < 64.0 && 3.0 <= $long2 < 12.0 {
-        $zone = 32;
-    }
-    if 72 <= $latitude < 84.0 { 
-        $zone =     ( 0.0 <= $long2 <  9.0) ?? 31
-	         !! ( 9.0 <= $long2 < 21.0) ?? 33
-	         !! (21.0 <= $long2 < 33.0) ?? 35
-                 !! (33.0 <= $long2 < 42.0) ?? 37
-		 !!                            $zone;
-    }
-    $zone;
-}
-
-my $lastellips = '';
-my ($name, $eccentricity, $radius);
-my $eccentprime;
-my ($k1, $k2, $k3, $k4);
-
-sub _latlon_to_utm(Str $ellips, Str $zone is copy, Real $latitude, Real $long2) {
-    if $ellips ne $lastellips {
-        ($name, $radius, $eccentricity) = |ellipsoid_info $ellips
-            or die "Ellipsoid value ($ellips) invalid.";
-        $eccentprime      = $eccentricity / (1 - $eccentricity);
-        $k1 = $radius * ( 1 - $eccentricity/4
-                - 3 * $eccentricity * $eccentricity / 64
-                - 5 * $eccentricity * $eccentricity * $eccentricity/ 256);
-        $k2 =  $radius * (3 * $eccentricity / 8
-            +  3 * $eccentricity * $eccentricity / 32
-            + 45 * $eccentricity * $eccentricity * $eccentricity / 1024);
-        $k3 = $radius * (15 * $eccentricity * $eccentricity / 256
-            + 45 * $eccentricity * $eccentricity * $eccentricity / 1024);
-        $k4 = $radius * (35 * $eccentricity * $eccentricity * $eccentricity / 3072);
-    }
-
-    my $lat_radian       = $deg2rad * $latitude;
-    my $long_radian      = $deg2rad * $long2;
-
-    my $k0               = 0.9996;                  # scale
-
-    my $longorigin       = ($zone - 1)*6 - 180 + 3;
-    my $longoriginradian = $deg2rad * $longorigin;
-    
-    my $N = $radius / sqrt(1-$eccentricity * sin($lat_radian)*sin($lat_radian));
-    my $T = tan($lat_radian) * tan($lat_radian);
-    my $C = $eccentprime * cos($lat_radian)*cos($lat_radian);
-    my $A = cos($lat_radian) * ($long_radian - $longoriginradian);
-    my$M = $k1 * $lat_radian
-         - $k2 * sin(2 * $lat_radian)
-         + $k3 * sin(4 * $lat_radian)
-         - $k4 * sin(6 * $lat_radian)
-         ;
-
-    my $utm_easting  = $k0*$N*($A+(1-$T+$C)*$A*$A*$A/6
-                     + (5-18*$T+$T*$T+72*$C-58*$eccentprime)*$A*$A*$A*$A*$A/120)
-                     + 500000.0;
-
-    my $utm_northing = $k0 * ( $M + $N*tan($lat_radian) * ( $A*$A/2+(5-$T+9*$C+4*$C*$C)*$A*$A*$A*$A/24 + (61-58*$T+$T*$T+600*$C-330*$eccentprime) * $A*$A*$A*$A*$A*$A/720));
-
-    $utm_northing += 10000000.0 if $latitude < 0;
-
-    my $utm_letter
-      =  ( 84 >= $latitude >=  72) ?? 'X'
-      !! ( 72 >  $latitude >=  64) ?? 'W'
-      !! ( 64 >  $latitude >=  56) ?? 'V'
-      !! ( 56 >  $latitude >=  48) ?? 'U'
-      !! ( 48 >  $latitude >=  40) ?? 'T'
-      !! ( 40 >  $latitude >=  32) ?? 'S'
-      !! ( 32 >  $latitude >=  24) ?? 'R'
-      !! ( 24 >  $latitude >=  16) ?? 'Q'
-      !! ( 16 >  $latitude >=   8) ?? 'P'
-      !! (  8 >  $latitude >=   0) ?? 'N'
-      !! (  0 >  $latitude >=  -8) ?? 'M'
-      !! ( -8 >  $latitude >= -16) ?? 'L'
-      !! (-16 >  $latitude >= -24) ?? 'K'
-      !! (-24 >  $latitude >= -32) ?? 'J'
-      !! (-32 >  $latitude >= -40) ?? 'H'
-      !! (-40 >  $latitude >= -48) ?? 'G'
-      !! (-48 >  $latitude >= -56) ?? 'F'
-      !! (-56 >  $latitude >= -64) ?? 'E'
-      !! (-64 >  $latitude >= -72) ?? 'D'
-      !! (-72 >  $latitude >= -80) ?? 'C'
-      !! die "Latitude ($latitude) out of UTM range.";
-
-    $zone ~= $utm_letter;
-
-    ($zone, $utm_easting, $utm_northing);
-}
-
-# Expects Ellipsoid Number or name, UTM zone, UTM Easting, UTM Northing
-# Returns Latitude, Longitude
-# (Latitude and Longitude in decimal degrees, UTM Zone e.g. 23S)
-
-sub utm_to_latlon(Str $ellips, Str $zone, Real $easting, Real $northing) is export {
-    my ($name, $radius, $eccentricity) = |ellipsoid_info $ellips
-        or die "Ellipsoid value ($ellips) invalid.";
-       
-    $zone              ~~ /^(\d+)(.*)/;
-    my $zone_number     = $/[0];
-    my Str $zone_letter = $/[1].Str.uc;
-
-    die "UTM zone ($zone_letter) invalid."
-       unless _valid_utm_zone $zone_letter;
-
-    my $k0 = 0.9996;
-    my $x  = $easting - 500000; # Remove Longitude offset
-    my $y  = $northing;
-
-    # Set hemisphere
-    my $southernhemi = $zone_letter lt 'N';
-    #$southernhemi = True if $zone_letter eq 'N'; # Yes, this line is necessary
-    $y            -= 10000000.0 if $southernhemi; # Remove Southern Offset
-
-    my $longorigin      = ($zone_number - 1)*6 - 180 + 3;
-    my $eccPrimeSquared = ($eccentricity)/(1-$eccentricity);
-    my $M               = $y/$k0;
-    my $mu              = $M/($radius*(1-$eccentricity/4-3*$eccentricity*$eccentricity/64-5*$eccentricity*$eccentricity*$eccentricity/256));
-
-    my $e1              = (1-sqrt(1-$eccentricity))/(1+sqrt(1-$eccentricity));
-    my $phi1rad         = $mu+(3*$e1/2-27*$e1*$e1*$e1/32)*sin(2*$mu)+(21*$e1*$e1/16-55*$e1*$e1*$e1*$e1/32)*sin(4*$mu)+(151*$e1*$e1*$e1/96)*sin(6*$mu);
-    my $phi1            = $phi1rad*$rad2deg;
-    my $N1              = $radius/sqrt(1-$eccentricity*sin($phi1rad)*sin($phi1rad));
-    my $T1              = tan($phi1rad)*tan($phi1rad);
-    my $C1              = $eccentricity*cos($phi1rad)*cos($phi1rad);
-    my $R1              = $radius * (1-$eccentricity)
-                          / ((1-$eccentricity*sin($phi1rad)*sin($phi1rad))**1.5);
-    my $D               = $x/($N1*$k0);
-
-    my $Latitude = $phi1rad-($N1*tan($phi1rad)/$R1)*($D*$D/2-(5+3*$T1+10*$C1-4*$C1*$C1-9*$eccPrimeSquared)*$D*$D*$D*$D/24+(61+90*$T1+298*$C1+45*$T1*$T1-252*$eccPrimeSquared-3*$C1*$C1)*$D*$D*$D*$D*$D*$D/720);
-       $Latitude = $Latitude * $rad2deg;
-
-    my $Longitude = ($D-(1+2*$T1+$C1)*$D*$D*$D/6+(5-2*$C1+28*$T1-3*$C1*$C1+8*$eccPrimeSquared+24*$T1*$T1)*$D*$D*$D*$D*$D/120)/cos($phi1rad);
-       $Longitude = $longorigin + $Longitude * $rad2deg;
-
-    ($Latitude, $Longitude);
-}
-
-sub utm_to_mgrs(Str $zone, Real $easting, Real $northing) is export {
-    my $zone_number     = $zone;
-    my Str $zone_letter = $zone_number;
-    $zone_number       ~~ s/^(\d+)(.*)//;
-    $zone_number        = $/[0];
-    $zone_letter        = $/[1].Str;
-
-   die "UTM zone ($zone_letter) invalid."
-     unless _valid_utm_zone $zone_letter;
-
-   my $northing_zones = "ABCDEFGHJKLMNPQRSTUV";
-   my $rnd_north      = sprintf("%d",$northing);
-   my $north_split    = $rnd_north.chars - 5;
-      $north_split    = 0 if $north_split < 0;
-   my $mgrs_north     = $rnd_north.substr($rnd_north.chars-5);
-      $rnd_north     -= 2000000 while ($rnd_north >= 2000000);
-      $rnd_north     += 2000000 if $rnd_north < 0;
-   my $num_north      = ($rnd_north/100000).Int;
-      $num_north     += 5 if not ($zone_number % 2);
-      $num_north     -= 20 until $num_north < 20;
-   my $lett_north     = $northing_zones.substr($num_north,1);
-
-   my $rnd_east       = sprintf("%d",$easting);
-   my $east_split     = $rnd_east.chars-5;
-      $east_split     = 0 if $east_split < 0;
-   my $mgrs_east      = $rnd_east.substr($rnd_east.chars-5, Inf);
-   my $num_east       = $rnd_east.substr(0, $rnd_east.chars-5);
-      $num_east       = 0 if not $num_east;
-   my $mgrs_zone      = $zone_number;
-      $mgrs_zone     -= 3 until $mgrs_zone < 4;
-   # zones are 6deg wide, mgrs letters are 18deg = 8 per zone
-   # calculate which zone required
-   my $easting_zones
-                      =  ( $mgrs_zone == 1) ?? 'ABCDEFGH'
-                      !! ( $mgrs_zone == 2) ?? 'JKLMNPQR'
-                      !! ( $mgrs_zone == 3) ?? 'STUVWXYZ'
-                      !! die "Could not calculate MGRS zone.";
-   $num_east--;
-   my $lett_east      = $easting_zones.substr($num_east,1)
-                      or die "Could not detect Easting Zone for MGRS coordinate";
-
-   my $MGRS           = "$zone$lett_east$lett_north$mgrs_east$mgrs_north";
-  ($MGRS);
-}
-
-sub latlon_to_mgrs(Str $ellips, Real $latitude, Real $longitude) is export {
-    my ($zone,$x_coord,$y_coord) = |latlon_to_utm($ellips, $latitude, $longitude);
-    my $mgrs_string              = utm_to_mgrs($zone,$x_coord,$y_coord);
-    ($mgrs_string);
-}
-
-
-sub mgrs_to_utm(Str $mgrs_string is copy) is export {
-   my $zone            = $mgrs_string.substr(0,2);
-      $mgrs_string     = "0" ~ $mgrs_string if $zone !~~ /^\d+$/;
-      $zone            = $mgrs_string.substr(0,3);
-   my $zone_number     = $zone;
-   my Str $zone_letter = $zone_number;
-      $zone_number    ~~ s/^(\d+)(.*)//;
-      $zone_number     = $/[0];
-      $zone_letter     = $/[1].Str;
-
-   die "UTM zone ($zone_letter) invalid."
-     unless _valid_utm_zone $zone_letter;
-
-   my $first_letter = $mgrs_string.substr(3,1);
-   die "MGRS zone ($first_letter) invalid."
-     unless $first_letter ~~ /<[ABCDEFGHJKLMNPQRSTUVWXYZ]>/;
-
-   my $second_letter = $mgrs_string.substr(4,1);
-   die "MGRS zone ($second_letter) invalid."
-     unless $second_letter ~~ /<[ABCDEFGHJKLMNPQRSTUV]>/;
-
-   my $coords    = $mgrs_string.substr(5, Inf);
-   my $coord_len = $coords.chars;
-   die "MGRS coords ($coords) invalid."
-     unless (0 < $coord_len <= 10) and !($coord_len % 2);
+   constant \deg2rad =  pi / 180;
+   constant \rad2deg = 180 /  pi;
    
-   $coord_len  = ($coord_len/2).Int;
-   my $x_coord = $coords.substr(0,$coord_len);
-   my $y_coord = $coords.substr($coord_len, Inf);
-   $x_coord   *= 10 ** (5 - $coord_len);
-   $y_coord   *= 10 ** (5 - $coord_len);
-
-   my $east_pos
-     =  ( $first_letter ~~ /<[ABCDEFGH]>/) ?? index('ABCDEFGH',$first_letter)
-     !! ( $first_letter ~~ /<[JKLMNPQR]>/) ?? index('JKLMNPQR',$first_letter)
-     !! ( $first_letter ~~ /<[STUVWXYZ]>/) ?? index('STUVWXYZ',$first_letter)
-     !! die "Could not calculate MGRS Easting zone.";
-   die "MGRS Letter $first_letter invalid." if $east_pos < 0;
-   $east_pos++;
-   $east_pos *= 100000;
-   $x_coord  += $east_pos;
-
-   my $northing_zones = "ABCDEFGHJKLMNPQRSTUV";
-   my $north_pos      = $northing_zones.index($second_letter);
-   die "MGRS Letter $second_letter invalid." if $north_pos < 0;
-   $north_pos++;
-   $north_pos -= 5 if not ($zone_number % 2);
-   $north_pos += 20 until $north_pos > 0;
-   if ($zone_letter ~~ /<[NPQRSTUVWX]>/) { # Northern hemisphere
-       my $tmpNorth = index('NPQRSTUVWX',$zone_letter);
-       $tmpNorth++;
-       $tmpNorth    *= 8;
-       $tmpNorth    *= 10/9;
-       $tmpNorth     = ((($tmpNorth-$north_pos)/20)+0.5).Int*20;
-       $north_pos   += $tmpNorth;
-       $north_pos   *= 100000;
-       $north_pos   -= 100000;
-       $y_coord     += $north_pos;
+   # remove all markup from an ellipsoid name, to increase the chance
+   # that a match is found.
+   sub _cleanup_name(Str $copy is copy) {
+       $copy .= lc;
+       $copy ~~ s:g/ \( <[-)]>* \) //;   # remove text between parentheses
+       $copy ~~ s:g/ <[\s-]> //;         # no blanks or dashes
+       return $copy;
    }
-   else { #Southern Hemisphere
-       my $tmpNorth = index('CDEFGHJKLM',$zone_letter);
-       $tmpNorth    *= 8;
-       $tmpNorth    *= 10/9;
-       $tmpNorth     = ((($tmpNorth-$north_pos)/20)+0.5).Int*20;
-       $north_pos   += $tmpNorth;
-       $north_pos   *= 100000;
-       $north_pos   -= 100000;
-       $north_pos   += 2000000 if $zone_letter ne "C";
-       $y_coord     += $north_pos;
+   
+   # Ellipsoid array (name,equatorial radius,square of eccentricity)
+   # Same data also as hash with key eq name (in variations)
+   
+   my (@Ellipsoid, %Ellipsoid);
+   
+   BEGIN {  # Initialize this before other modules get a chance
+      @Ellipsoid =
+       ( [ "Airy",                                6377563,     0.006670540]
+       , [ "Australian National",                 6378160,     0.006694542]
+       , [ "Bessel 1841",                         6377397,     0.006674372]
+       , [ "Bessel 1841 Nambia",                  6377484,     0.006674372]
+       , [ "Clarke 1866",                         6378206,     0.006768658]
+       , [ "Clarke 1880",                         6378249,     0.006803511]
+       , [ "Everest 1830 India",                  6377276,     0.006637847]
+       , [ "Fischer 1960 Mercury",                6378166,     0.006693422]
+       , [ "Fischer 1968",                        6378150,     0.006693422]
+       , [ "GRS 1967",                            6378160,     0.006694605]
+       , [ "GRS 1980",                            6378137,     0.006694380]
+       , [ "Helmert 1906",                        6378200,     0.006693422]
+       , [ "Hough",                               6378270,     0.006722670]
+       , [ "International",                       6378388,     0.006722670]
+       , [ "Krassovsky",                          6378245,     0.006693422]
+       , [ "Modified Airy",                       6377340,     0.006670540]
+       , [ "Modified Everest",                    6377304,     0.006637847]
+       , [ "Modified Fischer 1960",               6378155,     0.006693422]
+       , [ "South American 1969",                 6378160,     0.006694542]
+       , [ "WGS 60",                              6378165,     0.006693422]
+       , [ "WGS 66",                              6378145,     0.006694542]
+       , [ "WGS-72",                              6378135,     0.006694318]
+       , [ "WGS-84",                              6378137,     0.00669438 ]
+       , [ "Everest 1830 Malaysia",               6377299,     0.006637847]
+       , [ "Everest 1956 India",                  6377301,     0.006637847]
+       , [ "Everest 1964 Malaysia and Singapore", 6377304,     0.006637847]
+       , [ "Everest 1969 Malaysia",               6377296,     0.006637847]
+       , [ "Everest Pakistan",                    6377296,     0.006637534]
+       , [ "Indonesian 1974",                     6378160,     0.006694609]
+       , [ "Arc 1950",                            6378249.145, 0.006803481]
+       , [ "NAD 27",                              6378206.4,   0.006768658]
+       , [ "NAD 83",                              6378137,     0.006694384]
+       );
+   
+   # calc ecc  as  
+   # a = semi major axis
+   # b = semi minor axis
+   # e^2 = (a^2-b^2)/a^2	
+   # For clarke 1880 (Arc1950) a=6378249.145 b=6356514.966398753
+   # e^2 (40682062155693.23 - 40405282518051.34) / 40682062155693.23
+   # e^2 = 0.0068034810178165
+   	
+   
+     for @Ellipsoid -> $el {
+         my (Str $name, Real $eqrad, Real $eccsq) = @$el;
+         %Ellipsoid{$name} = $el;
+         %Ellipsoid{_cleanup_name $name} = $el;
+     }
+   }
+   
+   sub _valid_utm_zone(Str $char) {
+       ? $char ~~ /<[CDEFGHJKLMNPQRSTUVWX]>/;
+   }
+   
+   # Returns all pre-defined ellipsoid names, sorted alphabetically
+   sub ellipsoid_names() is export {
+       @Ellipsoid ==> map { .[0] };
+   }
+   
+   # Returns "official" name, equator radius and square eccentricity
+   # The specified name can be numeric (for compatibility reasons) or
+   # a more-or-less exact name
+   # Examples:   my($name, $r, $sqecc) = ellipsoid_info 'wgs84';
+   #             my($name, $r, $sqecc) = ellipsoid_info 'WGS 84';
+   #             my($name, $r, $sqecc) = ellipsoid_info 'WGS-84';
+   #             my($name, $r, $sqecc) = ellipsoid_info 'WGS-84 (new specs)';
+   #             my($name, $r, $sqecc) = ellipsoid_info 22;
+   
+   sub ellipsoid_info(Str $id) is export {
+       my $el = $id !~~ m/\D/
+              ?? @Ellipsoid[$id-1]   # old system counted from 1
+              !! @Ellipsoid{$id} || %Ellipsoid{_cleanup_name $id};
+   
+       $el.defined ?? |@$el !! ();
+   }
+   
+   sub _latlon_zone_number(Real $latitude, Real $long2) {
+       my $zone = ( ($long2 + 180)/6).Int + 1;
+       if 56 <= $latitude < 64.0 && 3.0 <= $long2 < 12.0 {
+           $zone = 32;
+       }
+       if 72 <= $latitude < 84.0 { 
+           $zone =  ( 0.0 <= $long2 <  9.0) ?? 31
+   	         !! ( 9.0 <= $long2 < 21.0) ?? 33
+   	         !! (21.0 <= $long2 < 33.0) ?? 35
+                 !! (33.0 <= $long2 < 42.0) ?? 37
+   		 !!                            $zone;
+       }
+       $zone;
+   }
+   
+   my $lastellips = '';
+   my $name;
+   my $eccentricity;
+   my $radius;
+   my $eccentprime;
+   my ($k1, $k2, $k3, $k4);
+   
+   # Expects Ellipsoid Number or name, Latitude, Longitude 
+   # (Latitude and Longitude in decimal degrees)
+   # Returns UTM Zone, UTM Easting, UTM Northing
+   
+   sub latlon_to_utm(Str $ellips, Real $latitude, Real $longitude, Str :$zone is copy) is export {
+       die "Longitude value ($longitude) invalid."
+           unless -180 <= $longitude <= 180;
+   
+       my $long2 = $longitude - (($longitude + 180)/360).Int * 360;
+       my $zone_number;
+   
+       if $zone.defined {
+           $zone ~~ m:i/ ^ (\d+) <[CDEFGHJKLMNPQRSTUVWX]> ? $ /;
+           $zone_number = ~$/[0];
+   
+           die "Zone value ($zone) invalid."
+               unless $zone_number.defined && $zone_number <= 60;
+       } else {
+           $zone_number  = _latlon_zone_number($latitude, $long2).Str; 
+       }
+   
+       if $ellips ne $lastellips {
+           ($name, $radius, $eccentricity) = ellipsoid_info $ellips
+               or die "Ellipsoid value ($ellips) invalid.";
+           $eccentprime      = $eccentricity / (1 - $eccentricity);
+           $k1 = $radius * ( 1 - $eccentricity/4
+                   - 3 * $eccentricity * $eccentricity / 64
+                   - 5 * $eccentricity * $eccentricity * $eccentricity/ 256);
+           $k2 =  $radius * (3 * $eccentricity / 8
+               +  3 * $eccentricity * $eccentricity / 32
+               + 45 * $eccentricity * $eccentricity * $eccentricity / 1024);
+           $k3 = $radius * (15 * $eccentricity * $eccentricity / 256
+               + 45 * $eccentricity * $eccentricity * $eccentricity / 1024);
+           $k4 = $radius * (35 * $eccentricity * $eccentricity * $eccentricity / 3072);
+       }
+   
+       my $lat_radian       = deg2rad * $latitude;
+       my $long_radian      = deg2rad * $long2;
+   
+       my $k0               = 0.9996;                  # scale
+   
+       my $longorigin       = ($zone - 1)*6 - 180 + 3;
+       my $longoriginradian = deg2rad * $longorigin;
+       
+       my $N = $radius / sqrt(1-$eccentricity * sin($lat_radian)*sin($lat_radian));
+       my $T = tan($lat_radian) * tan($lat_radian);
+       my $C = $eccentprime * cos($lat_radian)*cos($lat_radian);
+       my $A = cos($lat_radian) * ($long_radian - $longoriginradian);
+       my $M = $k1 * $lat_radian
+             - $k2 * sin(2 * $lat_radian)
+             + $k3 * sin(4 * $lat_radian)
+             - $k4 * sin(6 * $lat_radian)
+             ;
+   
+       my $utm_easting  = $k0*$N*($A+(1-$T+$C)*$A*$A*$A/6
+                        + (5-18*$T+$T*$T+72*$C-58*$eccentprime)*$A*$A*$A*$A*$A/120)
+                        + 500000.0;
+   
+       my $utm_northing = $k0 * ( $M
+                                  + $N * tan($lat_radian)
+                                       * ( $A*$A/2
+                                         + (5 - $T + 9*$C + 4*$C*$C)*$A*$A*$A*$A/24
+                                         + (61 - 58*$T + $T*$T + 600*$C - 330*$eccentprime) * $A*$A*$A*$A*$A*$A/720
+                                         )
+                                );
+   
+       $utm_northing += 10000000.0 if $latitude < 0;
+   
+       my $utm_letter
+         =  ( 84 >= $latitude >=  72) ?? 'X'
+         !! ( 72 >  $latitude >=  64) ?? 'W'
+         !! ( 64 >  $latitude >=  56) ?? 'V'
+         !! ( 56 >  $latitude >=  48) ?? 'U'
+         !! ( 48 >  $latitude >=  40) ?? 'T'
+         !! ( 40 >  $latitude >=  32) ?? 'S'
+         !! ( 32 >  $latitude >=  24) ?? 'R'
+         !! ( 24 >  $latitude >=  16) ?? 'Q'
+         !! ( 16 >  $latitude >=   8) ?? 'P'
+         !! (  8 >  $latitude >=   0) ?? 'N'
+         !! (  0 >  $latitude >=  -8) ?? 'M'
+         !! ( -8 >  $latitude >= -16) ?? 'L'
+         !! (-16 >  $latitude >= -24) ?? 'K'
+         !! (-24 >  $latitude >= -32) ?? 'J'
+         !! (-32 >  $latitude >= -40) ?? 'H'
+         !! (-40 >  $latitude >= -48) ?? 'G'
+         !! (-48 >  $latitude >= -56) ?? 'F'
+         !! (-56 >  $latitude >= -64) ?? 'E'
+         !! (-64 >  $latitude >= -72) ?? 'D'
+         !! (-72 >  $latitude >= -80) ?? 'C'
+         !! die "Latitude ($latitude) out of UTM range.";
+   
+       $zone ~= $utm_letter;
+   
+       |($zone, $utm_easting, $utm_northing);
+   }
+   
+   # Expects Ellipsoid Number or name, UTM zone, UTM Easting, UTM Northing
+   # Returns Latitude, Longitude
+   # (Latitude and Longitude in decimal degrees, UTM Zone e.g. 23S)
+   
+   sub utm_to_latlon(Str $ellips, Str $zone, Real $easting, Real $northing) is export {
+       my ($name, $radius, $eccentricity) = ellipsoid_info $ellips
+           or die "Ellipsoid value ($ellips) invalid.";
+          
+       $zone              ~~ /^(\d+)(.*)/;
+       my $zone_number     = $/[0];
+       my Str $zone_letter = $/[1].Str.uc;
+   
+       die "UTM zone ($zone_letter) invalid."
+          unless _valid_utm_zone $zone_letter;
+   
+       my $k0 = 0.9996;
+       my $x  = $easting - 500000; # Remove Longitude offset
+       my $y  = $northing;
+       $y    -= 10000000.0 if $zone_letter lt 'N'; # Remove Southern Offset
+   
+       my $longorigin      = ($zone_number - 1)*6 - 180 + 3;
+       my $eccPrimeSquared = ($eccentricity)/(1-$eccentricity);
+       my $M               = $y/$k0;
+       my $mu              = $M/($radius*(1-$eccentricity/4-3*$eccentricity*$eccentricity/64-5*$eccentricity*$eccentricity*$eccentricity/256));
+   
+       my $e1              = (1-sqrt(1-$eccentricity))/(1+sqrt(1-$eccentricity));
+       my $phi1rad         = $mu+(3*$e1/2-27*$e1*$e1*$e1/32)*sin(2*$mu)+(21*$e1*$e1/16-55*$e1*$e1*$e1*$e1/32)*sin(4*$mu)+(151*$e1*$e1*$e1/96)*sin(6*$mu);
+       my $phi1            = $phi1rad*rad2deg;
+       my $N1              = $radius/sqrt(1-$eccentricity*sin($phi1rad)*sin($phi1rad));
+       my $T1              = tan($phi1rad)*tan($phi1rad);
+       my $C1              = $eccentricity*cos($phi1rad)*cos($phi1rad);
+       my $R1              = $radius * (1-$eccentricity)
+                             / ((1-$eccentricity*sin($phi1rad)*sin($phi1rad))**1.5);
+       my $D               = $x/($N1*$k0);
+   
+       my $Latitude = $phi1rad
+                    - ($N1*tan($phi1rad)/$R1)*($D*$D/2-(5+3*$T1+10*$C1-4*$C1*$C1-9*$eccPrimeSquared)*$D*$D*$D*$D/24+(61+90*$T1+298*$C1+45*$T1*$T1-252*$eccPrimeSquared-3*$C1*$C1)*$D*$D*$D*$D*$D*$D/720);
+          $Latitude = $Latitude * rad2deg;
+   
+       my $Longitude = ($D
+                       - (1 + 2 * $T1 + $C1) * $D*$D*$D / 6
+                       + (5
+                         - 2 * $C1
+                         + 28 * $T1
+                         - 3 * $C1 * $C1
+                         + 8 * $eccPrimeSquared
+                         + 24 * $T1*$T1
+                         ) * $D*$D*$D*$D*$D / 120
+                       ) / cos($phi1rad);
+          $Longitude = $longorigin + $Longitude * rad2deg;
+   
+       |($Latitude, $Longitude);
+   }
+   
+   sub utm_to_mgrs(Str $zone, Real $easting, Real $northing) is export {
+       my $zone_number     = $zone;
+       my Str $zone_letter = $zone_number;
+       $zone_number       ~~ s/^(\d+)(.*)//;
+       $zone_number        = $/[0];
+       $zone_letter        = $/[1].Str;
+   
+      die "UTM zone ($zone_letter) invalid."
+        unless _valid_utm_zone $zone_letter;
+   
+      my $northing_zones = "ABCDEFGHJKLMNPQRSTUV";
+      my $rnd_north      = sprintf("%d",$northing);
+      my $north_split    = $rnd_north.chars - 5;
+         $north_split    = 0 if $north_split < 0;
+      my $mgrs_north     = $rnd_north.substr($rnd_north.chars-5);
+         $rnd_north     -= 2000000 while ($rnd_north >= 2000000);
+         $rnd_north     += 2000000 if $rnd_north < 0;
+      my $num_north      = ($rnd_north/100000).Int;
+         $num_north     += 5 if not ($zone_number % 2);
+         $num_north     -= 20 until $num_north < 20;
+      my $lett_north     = $northing_zones.substr($num_north,1);
+   
+      my $rnd_east       = sprintf("%d",$easting);
+      my $east_split     = $rnd_east.chars-5;
+         $east_split     = 0 if $east_split < 0;
+      my $mgrs_east      = $rnd_east.substr($rnd_east.chars-5, Inf);
+      my $num_east       = $rnd_east.substr(0, $rnd_east.chars-5);
+         $num_east       = 0 if not $num_east;
+      my $mgrs_zone      = $zone_number;
+         $mgrs_zone     -= 3 until $mgrs_zone < 4;
+      # zones are 6deg wide, mgrs letters are 18deg = 8 per zone
+      # calculate which zone required
+      my $easting_zones
+                         =  ( $mgrs_zone == 1) ?? 'ABCDEFGH'
+                         !! ( $mgrs_zone == 2) ?? 'JKLMNPQR'
+                         !! ( $mgrs_zone == 3) ?? 'STUVWXYZ'
+                         !! die "Could not calculate MGRS zone.";
+      $num_east--;
+      my $lett_east      = $easting_zones.substr($num_east,1)
+                         or die "Could not detect Easting Zone for MGRS coordinate";
+   
+      my $MGRS           = "$zone$lett_east$lett_north$mgrs_east$mgrs_north";
+     |($MGRS);
+   }
+   
+   sub latlon_to_mgrs(Str $ellips, Real $latitude, Real $longitude) is export {
+       my ($zone,$x_coord,$y_coord) = latlon_to_utm($ellips, $latitude, $longitude);
+       my $mgrs_string              = utm_to_mgrs($zone,$x_coord,$y_coord);
+       |($mgrs_string);
+   }
+   
+   sub mgrs_to_utm(Str $mgrs_string is copy) is export {
+      my $zone            = $mgrs_string.substr(0,2);
+         $mgrs_string     = "0" ~ $mgrs_string if $zone !~~ /^\d+$/;
+         $zone            = $mgrs_string.substr(0,3);
+      my $zone_number     = $zone;
+      my Str $zone_letter = $zone_number;
+         $zone_number    ~~ s/^(\d+)(.*)//;
+         $zone_number     = $/[0];
+         $zone_letter     = $/[1].Str;
+   
+      die "UTM zone ($zone_letter) invalid."
+        unless _valid_utm_zone $zone_letter;
+   
+      my $first_letter = $mgrs_string.substr(3,1);
+      die "MGRS zone ($first_letter) invalid."
+        unless $first_letter ~~ /<[ABCDEFGHJKLMNPQRSTUVWXYZ]>/;
+   
+      my $second_letter = $mgrs_string.substr(4,1);
+      die "MGRS zone ($second_letter) invalid."
+        unless $second_letter ~~ /<[ABCDEFGHJKLMNPQRSTUV]>/;
+   
+      my $coords    = $mgrs_string.substr(5, Inf);
+      my $coord_len = $coords.chars;
+      die "MGRS coords ($coords) invalid."
+        unless (0 < $coord_len <= 10) and !($coord_len % 2);
+      
+      $coord_len  = ($coord_len/2).Int;
+      my $x_coord = $coords.substr(0,$coord_len);
+      my $y_coord = $coords.substr($coord_len, Inf);
+      $x_coord   *= 10 ** (5 - $coord_len);
+      $y_coord   *= 10 ** (5 - $coord_len);
+   
+      my $east_pos
+        =  ( $first_letter ~~ /<[ABCDEFGH]>/) ?? index('ABCDEFGH',$first_letter)
+        !! ( $first_letter ~~ /<[JKLMNPQR]>/) ?? index('JKLMNPQR',$first_letter)
+        !! ( $first_letter ~~ /<[STUVWXYZ]>/) ?? index('STUVWXYZ',$first_letter)
+        !! die "Could not calculate MGRS Easting zone.";
+      die "MGRS Letter $first_letter invalid." if $east_pos < 0;
+      $east_pos++;
+      $east_pos *= 100000;
+      $x_coord  += $east_pos;
+   
+      my $northing_zones = "ABCDEFGHJKLMNPQRSTUV";
+      my $north_pos      = $northing_zones.index($second_letter);
+      die "MGRS Letter $second_letter invalid." if $north_pos < 0;
+      $north_pos++;
+      $north_pos -= 5 if not ($zone_number % 2);
+      $north_pos += 20 until $north_pos > 0;
+      if ($zone_letter ~~ /<[NPQRSTUVWX]>/) { # Northern hemisphere
+          my $tmpNorth = index('NPQRSTUVWX',$zone_letter);
+          $tmpNorth++;
+          $tmpNorth    *= 8;
+          $tmpNorth    *= 10/9;
+          $tmpNorth     = ((($tmpNorth-$north_pos)/20)+0.5).Int*20;
+          $north_pos   += $tmpNorth;
+          $north_pos   *= 100000;
+          $north_pos   -= 100000;
+          $y_coord     += $north_pos;
+      }
+      else { #Southern Hemisphere
+          my $tmpNorth = index('CDEFGHJKLM',$zone_letter);
+          $tmpNorth    *= 8;
+          $tmpNorth    *= 10/9;
+          $tmpNorth     = ((($tmpNorth-$north_pos)/20)+0.5).Int*20;
+          $north_pos   += $tmpNorth;
+          $north_pos   *= 100000;
+          $north_pos   -= 100000;
+          $north_pos   += 2000000 if $zone_letter ne "C";
+          $y_coord     += $north_pos;
+      }
+   
+      |($zone,$x_coord,$y_coord);
+   }
+   
+   sub mgrs_to_latlon(Str $ellips, Str $mgrs_string) is export {
+      my ($zone,$x_coord,$y_coord) = mgrs_to_utm($mgrs_string);
+      my ($latitude,$longitude)    = utm_to_latlon($ellips,$zone,$x_coord,$y_coord);
+      |($latitude,$longitude);
    }
 
-   ($zone,$x_coord,$y_coord);
-}
-
-sub mgrs_to_latlon(Str $ellips, Str $mgrs_string) is export {
-   my ($zone,$x_coord,$y_coord) = |mgrs_to_utm($mgrs_string);
-   my ($latitude,$longitude)    = |utm_to_latlon($ellips,$zone,$x_coord,$y_coord);
-   ($latitude,$longitude);
-}
+} # end module
 
 =begin pod
 =head1 NAME

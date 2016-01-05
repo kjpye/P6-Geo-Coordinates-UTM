@@ -3,7 +3,7 @@ use Test;
 
 plan 7992;
 
-BEGIN { @*INC.push('../lib'); }
+# BEGIN { @*INC.push('../lib'); }
 
 use Geo::Coordinates::UTM;
 
@@ -1027,18 +1027,18 @@ for $data.lines -> $line {
     my Real $longitude = $lo.Real;
     my Real $easting = $ea.Real;
     my Real $northing = $no.Real;
-    my (Str $z, Real $e, Real $n) = |latlon_to_utm($ellipsoid, $latitude.Real, $longitude.Real);
+    my (Str $z, Real $e, Real $n) = latlon_to_utm($ellipsoid, $latitude.Real, $longitude.Real);
     ok $z eq $zone, "zone $zone";
     ok fleq($e, $easting),  "easting $easting";
     ok fleq($n, $northing), "northing $northing";
 
-    my ($lat, $lon) = |utm_to_latlon($ellipsoid, $z, $easting, $northing);
+    my ($lat, $lon) = utm_to_latlon($ellipsoid, $z, $easting, $northing);
     ok fleq($lon, $longitude), "longitude $longitude -> $lon";
     ok fleq($lat, $latitude),  "latitude $latitude ->? $lat";
 
     $zone ~~ m/^ (\d+) (\w) /;
     my ($zone_number, $zone_letter) = ($/[0].Str, $/[1].Str);
-    ($z, $e, $n) = |latlon_to_utm($ellipsoid, zone => $zone_number, $latitude, $longitude);
+    ($z, $e, $n) = latlon_to_utm($ellipsoid, zone => $zone_number, $latitude, $longitude);
     ok $z eq $zone, "fz zone $zone";
     ok fleq($e, $easting),  "fz easting $easting";
     ok fleq($n, $northing), "fz northing $northing";
