@@ -1,5 +1,5 @@
 #NAME
-Geo::Coordinates::UTM - Perl extension for Latitiude Longitude conversions.
+Geo::Coordinates::UTM - Perl extension for Latitude Longitude conversions.
 
 #SYNOPSIS
 use Geo::Coordinates::UTM;
@@ -27,20 +27,27 @@ Transverse Mercator(UTM) coordinates and vice versa.
 ##Mercator Projection
 
 The Mercator projection was first invented to help mariners. They needed
-to be able to take a course and know the distance traveled, and draw a
-line on the map which showed the day's journey. In order to do this,
-Mercator invented a projection which preserved length, by projecting the
+to be able to draw a straight line on a map and follow that bearing to
+arrive at a destination. In order to do this,
+Mercator invented a projection which preserved angle, by projecting the
 earth's surface onto a cylinder, sharing the same axis as the earth
-itself. This caused all Latitude and Longitude lines to intersect at a
-90 degree angle, thereby negating the problem that longitude lines get
-closer together at the poles.
+itself. This caused all Latitude and Longitude lines to be straight and
+to intersect at a 90 degree angle, but the downside was that the scale of
+the map increased as you moved away from the equator so that the lines of
+longitude were parallel.
+
+Because the scale varies, areas near the poles appear much larger on the
+map than a similar sized object near the equator. The Mercator Projection
+is useless near the poles since the scale becomes infinite.
 
 ##Transverse Mercator Projection
 
 A Transverse Mercator projection takes the cylinder and turns it on its
 side. Now the cylinder's axis passes through the equator, and it can be
 rotated to line up with the area of interest. Many countries use
-Transverse Mercator for their grid systems.
+Transverse Mercator for their grid systems. The disadvantage is that now
+neither the lines of latitude or longitude (apart from the central
+meridian) are straight.
 
 ##Universal Transverse Mercator
 
@@ -53,8 +60,8 @@ the centre line of each zone. In the Northern Hemisphere, Northings are
 zero at the equator and increase northward. In the Southern Hemisphere,
 Northings start at 10 million at the equator, and decrease southward.
 You must know which hemisphere and zone you are in to interpret your
-location globally. Distortion of scale, distance, direction and area
-increase away from the central meridian.
+location globally. Distortion of scale, distance and area increase away
+from the central meridian.
 
 UTM projection is used to define horizontal positions world-wide by
 dividing the surface of the Earth into 6 degree zones, each mapped by
