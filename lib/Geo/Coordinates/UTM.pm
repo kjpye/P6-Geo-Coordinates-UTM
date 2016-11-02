@@ -139,7 +139,8 @@ module Geo::Coordinates::UTM {
            die "Zone value ($zone) invalid."
                unless $zone_number.defined && $zone_number <= 60;
        } else {
-           $zone_number  = _latlon_zone_number($latitude, $long2).Str; 
+           $zone_number  = _latlon_zone_number($latitude, $long2); 
+           $zone = $zone_number.Str;
        }
    
        if $ellips ne $lastellips {
@@ -162,7 +163,7 @@ module Geo::Coordinates::UTM {
    
        my $k0               = 0.9996;                  # scale
    
-       my $longorigin       = ($zone - 1)*6 - 180 + 3;
+       my $longorigin       = ($zone_number - 1)*6 - 180 + 3;
        my $longoriginradian = deg2rad * $longorigin;
        
        my $N = $radius / sqrt(1-$eccentricity * sin($lat_radian)*sin($lat_radian));
