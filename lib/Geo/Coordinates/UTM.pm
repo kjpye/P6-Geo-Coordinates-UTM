@@ -408,7 +408,7 @@ module Geo::Coordinates::UTM {
 =begin pod
 =head1 NAME
 
-Geo::Coordinates::UTM - Perl extension for Latitiude Longitude conversions.
+Geo::Coordinates::UTM - Perl extension for Latitude Longitude conversions.
 
 =head1 SYNOPSIS
 
