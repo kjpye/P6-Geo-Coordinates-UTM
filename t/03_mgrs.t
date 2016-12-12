@@ -63,10 +63,10 @@ for $data.lines -> $line {
 
 
     my ($ellipsoid, $latitude, $longitude, $mgrs) = $line.split('|');
-    my ($m) = latlon_to_mgrs($ellipsoid.Str, $latitude.Real, $longitude.Real);
+    my ($m) = |latlon-to-mgrs($ellipsoid.Str, $latitude.Real, $longitude.Real);
     ok $m eq $mgrs, "MGRS $mgrs";
 
-    my ($lat, $lon) = mgrs_to_latlon($ellipsoid, $m);
+    my ($lat, $lon) = |mgrs-to-latlon($ellipsoid, $m);
     ok fleq($lon, $longitude), "longitude $longitude";
     ok fleq($lat, $latitude),  "latitude $latitude";
 }

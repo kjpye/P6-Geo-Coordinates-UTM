@@ -1,6 +1,6 @@
 {
     "name"        : "Geo-Coordinates-UTM",
-    "version"     : "0.1.0",
+    "version"     : "0.2.0",
     "description" : "Convert LatLon to UTM and vice versa",
     "author"      : "Kevin Pye (Kevin.Pye@gmail.com)",
     "depends"     : [],
