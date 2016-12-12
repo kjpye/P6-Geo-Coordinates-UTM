@@ -144,7 +144,7 @@ module Geo::Coordinates::UTM {
        }
    
        if $ellips ne $lastellips {
-           ($name, $radius, $eccentricity) = ellipsoid-info $ellips
+           ($name, $radius, $eccentricity) = |ellipsoid-info $ellips
                or die "Ellipsoid value ($ellips) invalid.";
            $eccentprime      = $eccentricity / (1 - $eccentricity);
            $k1 = $radius * ( 1 - $eccentricity/4
@@ -223,7 +223,7 @@ module Geo::Coordinates::UTM {
    # (Latitude and Longitude in decimal degrees, UTM Zone e.g. 23S)
    
    sub utm-to-latlon(Str $ellips, Str $zone, Real $easting, Real $northing) is export {
-       my ($name, $radius, $eccentricity) = ellipsoid-info $ellips
+       my ($name, $radius, $eccentricity) = |ellipsoid-info $ellips
            or die "Ellipsoid value ($ellips) invalid.";
           
        $zone              ~~ /^(\d+)(.*)/;
@@ -318,8 +318,8 @@ module Geo::Coordinates::UTM {
    }
    
    sub latlon-to-mgrs(Str $ellips, Real $latitude, Real $longitude) is export {
-       my ($zone,$x-coord,$y-coord) = latlon-to-utm($ellips, $latitude, $longitude);
-       my $mgrs-string              = utm-to-mgrs($zone,$x-coord,$y-coord);
+       my ($zone,$x-coord,$y-coord) = |latlon-to-utm($ellips, $latitude, $longitude);
+       my $mgrs-string              = |utm-to-mgrs($zone,$x-coord,$y-coord);
        ($mgrs-string);
    }
    
@@ -398,8 +398,8 @@ module Geo::Coordinates::UTM {
    }
    
    sub mgrs-to-latlon(Str $ellips, Str $mgrs-string) is export {
-      my ($zone,$x-coord,$y-coord) = mgrs-to-utm($mgrs-string);
-      my ($latitude,$longitude)    = utm-to-latlon($ellips,$zone,$x-coord,$y-coord);
+      my ($zone,$x-coord,$y-coord) = |mgrs-to-utm($mgrs-string);
+      my ($latitude,$longitude)    = |utm-to-latlon($ellips,$zone,$x-coord,$y-coord);
       ($latitude,$longitude);
    }
 
@@ -414,21 +414,21 @@ Geo::Coordinates::UTM - Perl extension for Latitude Longitude conversions.
 
 use Geo::Coordinates::UTM;
 
-my ($zone,$easting,$northing)=latlon-to-utm($ellipsoid,$latitude,$longitude);
+my ($zone,$easting,$northing)=|latlon-to-utm($ellipsoid,$latitude,$longitude);
 
-my ($latitude,$longitude)=utm-to-latlon($ellipsoid,$zone,$easting,$northing);
+my ($latitude,$longitude)=|utm-to-latlon($ellipsoid,$zone,$easting,$northing);
 
-my ($zone,$easting,$northing)=mgrs-to-utm($mgrs);
+my ($zone,$easting,$northing)=|mgrs-to-utm($mgrs);
 
-my ($latitude,$longitude)=mgrs-to-latlon($ellipsoid,$mgrs);
+my ($latitude,$longitude)=|mgrs-to-latlon($ellipsoid,$mgrs);
 
-my ($mgrs)=utm-to-mgrs($zone,$easting,$northing);
+my ($mgrs)=|utm-to-mgrs($zone,$easting,$northing);
 
-my ($mgrs)=latlon-to-mgrs($ellipsoid,$latitude,$longitude);
+my ($mgrs)=|latlon-to-mgrs($ellipsoid,$latitude,$longitude);
 
 my @ellipsoids=ellipsoid-names;
 
-my($name, $r, $sqecc) = ellipsoid-info 'WGS-84';
+my($name, $r, $sqecc) = |ellipsoid-info 'WGS-84';
 
 =head1 DESCRIPTION
 
@@ -550,11 +550,11 @@ The ellipsoids can be accessed using  ellipsoid-names. To store thes into an arr
 
 Ellipsoids may be called either by name, or number. To return the ellipsoid information, ( "official" name, equator radius and square eccentricity) you can use ellipsoid-info and specify a name. The specified name can be numeric (for compatibility reasons) or a more-or-less exact name. Any text between parentheses will be ignored.
 
-     my($name, $r, $sqecc) = ellipsoid-info 'wgs84';
-     my($name, $r, $sqecc) = ellipsoid-info 'WGS 84';
-     my($name, $r, $sqecc) = ellipsoid-info 'WGS-84';
-     my($name, $r, $sqecc) = ellipsoid-info 'WGS-84 (new specs)';
-     my($name, $r, $sqecc) = ellipsoid-info 23;
+     my($name, $r, $sqecc) = |ellipsoid-info 'wgs84';
+     my($name, $r, $sqecc) = |ellipsoid-info 'WGS 84';
+     my($name, $r, $sqecc) = |ellipsoid-info 'WGS-84';
+     my($name, $r, $sqecc) = |ellipsoid-info 'WGS-84 (new specs)';
+     my($name, $r, $sqecc) = |ellipsoid-info 23;
 
 =head2 latlon-to-utm
 
@@ -567,7 +567,7 @@ For latitude  57deg 49min 59.000sec North
 
 using Clarke 1866 (Ellipsoid 5)
 
-     ($zone,$east,$north)=latlon-to-utm('clarke 1866',57.803055556,-2.788951667)
+     ($zone,$east,$north)=|latlon-to-utm('clarke 1866',57.803055556,-2.788951667)
 
 returns 
 
@@ -581,7 +581,7 @@ On occasions, it is necessary to map a pair of (latitude, longitude)
 coordinates to a predefined zone. This function allows to select the
 projection zone as follows:
 
-     ($zone, $east, $north)=latlon-to-utm('international', $zone_number,
+     ($zone, $east, $north)=|latlon-to-utm('international', $zone_number,
                                           $latitude, $longitude)
 
 For instance, Spain territory goes over zones 29, 30 and 31 but
@@ -590,7 +590,7 @@ sometimes it is convenient to use the projection corresponding to zone
 
 Santiago de Compostela is at 42deg 52min 57.06sec North, 8deg 32min 28.70sec West
 
-    ($zone, $east, $norh)=latlon-to-utm('international',  42.882517, -8.541306)
+    ($zone, $east, $norh)=|latlon-to-utm('international',  42.882517, -8.541306)
 
 returns
 
@@ -600,7 +600,7 @@ returns
 
 but forcing the conversion to zone 30:
 
-    ($zone, $east, $norh)=latlon-to-utm-force-zone('international',
+    ($zone, $east, $norh)=|latlon-to-utm-force-zone('international',
                                                    30, 42.882517, -8.541306)
 
 returns
@@ -613,7 +613,7 @@ returns
 
 Reversing the above example,
 
-     ($latitude,$longitude)=utm-to-latlon(5,'30V',512543.777159849,6406592.20049111)
+     ($latitude,$longitude)=|utm-to-latlon(5,'30V',512543.777159849,6406592.20049111)
 
 returns
 
@@ -637,7 +637,7 @@ For latitude  57deg 49min 59.000sec North
 
 using WGS84 (Ellipsoid 23)
 
-     ($mgrs)=latlon-to-mgrs(23,57.8030590197684,-2.788956799)
+     ($mgrs)=|latlon-to-mgrs(23,57.8030590197684,-2.788956799)
 
 returns 
 
@@ -647,7 +647,7 @@ returns
 
 Reversing the above example,
 
-     ($latitude,$longitude)=mgrs-to-latlon(23,'30VWK1254306804')
+     ($latitude,$longitude)=|mgrs-to-latlon(23,'30VWK1254306804')
 
 returns
 
@@ -658,7 +658,7 @@ returns
 
     Similarly it is possible to convert MGRS directly to UTM
 
-        ($zone,$easting,$northing)=mgrs-to-utm('30VWK1254306804')
+        ($zone,$easting,$northing)=|mgrs-to-utm('30VWK1254306804')
 
     returns
 
@@ -670,7 +670,7 @@ returns
 
     and the inverse converting from UTM yo MGRS is done as follows
 
-       ($mgrs)=utm-to-mgrs('30V',512543,6406804);
+       ($mgrs)=|utm-to-mgrs('30V',512543,6406804);
 
     returns
         $mgrs = 30VWK1254306804
