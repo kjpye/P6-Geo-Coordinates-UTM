@@ -96,7 +96,7 @@ module Geo::Coordinates::UTM {
               ?? @Ellipsoid[$id-1]   # old system counted from 1
               !! @Ellipsoid{$id} || %Ellipsoid{_cleanup-name $id};
    
-       $el.defined ?? |@$el !! ();
+       $el.defined ?? @$el !! ();
    }
    
    sub _latlon-zone-number(Real $latitude, Real $long2) {
@@ -215,7 +215,7 @@ module Geo::Coordinates::UTM {
    
        $zone ~= $utm-letter;
    
-       |($zone, $utm-easting, $utm-northing);
+       ($zone, $utm-easting, $utm-northing);
    }
    
    # Expects Ellipsoid Number or name, UTM zone, UTM Easting, UTM Northing
@@ -269,7 +269,7 @@ module Geo::Coordinates::UTM {
                        ) / cos($phi1rad);
           $Longitude = $longorigin + $Longitude * rad2deg;
    
-       |($Latitude, $Longitude);
+       ($Latitude, $Longitude);
    }
    
    sub utm-to-mgrs(Str $zone, Real $easting, Real $northing) is export {
@@ -314,13 +314,13 @@ module Geo::Coordinates::UTM {
                          or die "Could not detect Easting Zone for MGRS coordinate";
    
       my $MGRS           = "$zone$lett-east$lett-north$mgrs-east$mgrs-north";
-     |($MGRS);
+     ($MGRS);
    }
    
    sub latlon-to-mgrs(Str $ellips, Real $latitude, Real $longitude) is export {
        my ($zone,$x-coord,$y-coord) = latlon-to-utm($ellips, $latitude, $longitude);
        my $mgrs-string              = utm-to-mgrs($zone,$x-coord,$y-coord);
-       |($mgrs-string);
+       ($mgrs-string);
    }
    
    sub mgrs-to-utm(Str $mgrs-string is copy) is export {
@@ -394,13 +394,13 @@ module Geo::Coordinates::UTM {
           $y-coord     += $north-pos;
       }
    
-      |($zone,$x-coord,$y-coord);
+      ($zone,$x-coord,$y-coord);
    }
    
    sub mgrs-to-latlon(Str $ellips, Str $mgrs-string) is export {
       my ($zone,$x-coord,$y-coord) = mgrs-to-utm($mgrs-string);
       my ($latitude,$longitude)    = utm-to-latlon($ellips,$zone,$x-coord,$y-coord);
-      |($latitude,$longitude);
+      ($latitude,$longitude);
    }
 
 } # end module
