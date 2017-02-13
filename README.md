@@ -4,13 +4,13 @@ Geo::Coordinates::UTM - Perl extension for Latitude Longitude conversions.
 #SYNOPSIS
 use Geo::Coordinates::UTM;
 
-my ($zone,$easting,$northing)=latlon_to_utm($ellipsoid,$latitude,$longitude[,zone=>$zone]);
+my ($zone,$easting,$northing)=|latlon_to_utm($ellipsoid,$latitude,$longitude[,zone=>$zone]);
 
-my ($latitude,$longitude)=utm_to_latlon($ellipsoid,$zone,$easting,$northing);
+my ($latitude,$longitude)=|utm_to_latlon($ellipsoid,$zone,$easting,$northing);
 
-my ($zone,$easting,$northing)=mgrs_to_utm($mgrs);
+my ($zone,$easting,$northing)=|mgrs_to_utm($mgrs);
 
-my ($latitude,$longitude)=mgrs_to_latlon($ellipsoid,$mgrs);
+my ($latitude,$longitude)=|mgrs_to_latlon($ellipsoid,$mgrs);
 
 my ($mgrs)=utm_to_mgrs($zone,$easting,$northing);
 
@@ -18,7 +18,7 @@ my ($mgrs)=latlon_to_mgrs($ellipsoid,$latitude,$longitude);
 
 my @ellipsoids=ellipsoid_names;
 
-my($name, $r, $sqecc) = ellipsoid_info 'WGS-84';
+my($name, $r, $sqecc) = |ellipsoid_info 'WGS-84';
 
 #DESCRIPTION
 This module will translate latitude longitude coordinates to Universal

@@ -436,32 +436,85 @@ This module will translate latitude longitude coordinates to Universal Transvers
 
 =head2 Mercator Projection
 
-The Mercator projection was first invented to help mariners. They needed to be able to take a course and know the distance traveled, and draw a line on the map which showed the day's journey. In order to do this, Mercator invented a projection which preserved length, by projecting the earth's surface onto a cylinder, sharing the same axis as the earth itself.
-This caused all Latitude and Longitude lines to intersect at a 90 degree angle, thereby negating the problem that longitude lines get closer together at the poles.
+The Mercator projection was first invented to help mariners. They needed
+to be able to draw a straight line on a map and follow that bearing to
+arrive at a destination. In order to do this,
+Mercator invented a projection which preserved angle, by projecting the
+earth's surface onto a cylinder, sharing the same axis as the earth
+itself. This caused all Latitude and Longitude lines to be straight and
+to intersect at a 90 degree angle, but the downside was that the scale of
+the map increased as you moved away from the equator so that the lines of
+longitude were parallel.
+
+Because the scale varies, areas near the poles appear much larger on the
+map than a similar sized object near the equator. The Mercator Projection
+is useless near the poles since the scale becomes infinite.
 
 =head2 Transverse Mercator Projection
 
-A Transverse Mercator projection takes the cylinder and turns it on its side. Now the cylinder's axis passes through the equator, and it can be rotated to line up with the area of interest. Many countries use Transverse Mercator for their grid systems.
+A Transverse Mercator projection takes the cylinder and turns it on its
+side. Now the cylinder's axis passes through the equator, and it can be
+rotated to line up with the area of interest. Many countries use
+Transverse Mercator for their grid systems. The disadvantage is that now
+neither the lines of latitude or longitude (apart from the central
+meridian) are straight.
 
 =head2 Universal Transverse Mercator
 
-The Universal Transverse Mercator(UTM) system sets up a universal world wide system for mapping. The Transverse Mercator projection is used, with the cylinder in 60 positions. This creates 60 zones around the world.
-Positions are measured using Eastings and Northings, measured in meters, instead of Latitude and Longitude. Eastings start at 500,000 on the centre line of each zone.
-In the Northern Hemisphere, Northings are zero at the equator and increase northward. In the Southern Hemisphere, Northings start at 10 million at the equator, and decrease southward. You must know which hemisphere and zone you are in to interpret your location globally. 
-Distortion of scale, distance, direction and area increase away from the central meridian.
+The Universal Transverse Mercator(UTM) system sets up a universal world
+wide system for mapping. The Transverse Mercator projection is used,
+with the cylinder in 60 positions. This creates 60 zones around the
+world. Positions are measured using Eastings and Northings, measured in
+meters, instead of Latitude and Longitude. Eastings start at 500,000 on
+the centre line of each zone. In the Northern Hemisphere, Northings are
+zero at the equator and increase northward. In the Southern Hemisphere,
+Northings start at 10 million at the equator, and decrease southward.
+You must know which hemisphere and zone you are in to interpret your
+location globally. Distortion of scale, distance and area increase away
+from the central meridian.
 
-UTM projection is used to define horizontal positions world-wide by dividing the surface of the Earth into 6 degree zones, each mapped by the Transverse Mercator projection with a central meridian in the center of the zone. 
-UTM zone numbers designate 6 degree longitudinal strips extending from 80 degrees South latitude to 84 degrees North latitude. UTM zone characters designate 8 degree zones extending north and south from the equator. Eastings are measured from the central meridian (with a 500 km false easting to insure positive coordinates). Northings are measured from the equator (with a 10,000 km false northing for positions south of the equator).
+UTM projection is used to define horizontal positions world-wide by
+dividing the surface of the Earth into 6 degree zones, each mapped by
+the Transverse Mercator projection with a central meridian in the center
+of the zone. UTM zone numbers designate 6 degree longitudinal strips
+extending from 80 degrees South latitude to 84 degrees North latitude.
+UTM zone characters designate 8 degree zones extending north and south
+from the equator. Eastings are measured from the central meridian (with
+a 500 km false easting to insure positive coordinates). Northings are
+measured from the equator (with a 10,000 km false northing for positions
+south of the equator).
 
-UTM is applied separately to the Northern and Southern Hemisphere, thus within a single UTM zone, a single X / Y pair of values will occur in both the Northern and Southern Hemisphere. 
-To eliminate this confusion, and to speed location of points, a UTM zone is sometimes subdivided into 20 zones of Latitude. These grids can be further subdivided into 100,000 meter grid squares with double-letter designations. This subdivision by Latitude and further division into grid squares is generally referred to as the Military Grid Reference System (MGRS).
-The unit of measurement of UTM is always meters and the zones are numbered from 1 to 60 eastward, beginning at the 180th meridian.
-The scale distortion in a north-south direction parallel to the central meridian (CM) is constant However, the scale distortion increases either direction away from the CM. To equalize the distortion of the map across the UTM zone, a scale factor of 0.9996 is applied to all distance measurements within the zone. The distortion at the zone boundary, 3 degrees away from the CM is approximately 1%.
+UTM is applied separately to the Northern and Southern Hemisphere, thus
+within a single UTM zone, a single X / Y pair of values will occur in
+both the Northern and Southern Hemisphere. To eliminate this confusion,
+and to speed location of points, a UTM zone is sometimes subdivided into
+20 zones of Latitude. These grids can be further subdivided into 100,000
+meter grid squares with double-letter designations. This subdivision by
+Latitude and further division into grid squares is generally referred to
+as the Military Grid Reference System (MGRS). The unit of measurement of
+UTM is always meters and the zones are numbered from 1 to 60 eastward,
+beginning at the 180th meridian. The scale distortion in a north-south
+direction parallel to the central meridian (CM) is constant However, the
+scale distortion increases either direction away from the CM. To
+equalize the distortion of the map across the UTM zone, a scale factor
+of 0.9996 is applied to all distance measurements within the zone. The
+distortion at the zone boundary, 3 degrees away from the CM is
+approximately 1%.
 
 =head2 Datums and Ellipsoids
 
-Unlike local surveys, which treat the Earth as a plane, the precise determination of the latitude and longitude of points over a broad area must take into account the actual shape of the Earth. To achieve the precision necessary for accurate location, the Earth cannot be assumed to be a sphere. Rather, the Earth's shape more closely approximates an ellipsoid (oblate spheroid): flattened at the poles and bulging at the Equator. Thus the Earth's shape, when cut through its polar axis, approximates an ellipse.
-A "Datum" is a standard representation of shape and offset for coordinates, which includes an ellipsoid and an origin. You must consider the Datum when working with geospatial data, since data with two different Datum will not line up. The difference can be as much as a kilometer!
+Unlike local surveys, which treat the Earth as a plane, the precise
+determination of the latitude and longitude of points over a broad area
+must take into account the actual shape of the Earth. To achieve the
+precision necessary for accurate location, the Earth cannot be assumed
+to be a sphere. Rather, the Earth's shape more closely approximates an
+ellipsoid (oblate spheroid): flattened at the poles and bulging at the
+Equator. Thus the Earth's shape, when cut through its polar axis,
+approximates an ellipse. A "Datum" is a standard representation of shape
+and offset for coordinates, which includes an ellipsoid and an origin.
+You must consider the Datum when working with geospatial data, since
+data with two different Datum will not line up. The difference can be as
+much as a kilometer!
 
 =head1 EXAMPLES
 
@@ -533,9 +586,9 @@ The Ellipsoids available are as follows:
 
 =item 30 Arc 1950
 
-=item 30 NAD 27
+=item 31 NAD 27
 
-=item 30 NAD 83
+=item 32 NAD 83
 
 =back
 
@@ -575,13 +628,10 @@ returns
      $east  = 512543.777159849
      $north = 6406592.20049111
 
-=head2 latlon-to-utm-force-zone
-
 On occasions, it is necessary to map a pair of (latitude, longitude)
-coordinates to a predefined zone. This function allows to select the
-projection zone as follows:
+coordinates to a predefined zone. This is done by p[roviding a value for the optional named parameter zone as follows:
 
-     ($zone, $east, $north)=|latlon-to-utm('international', $zone_number,
+     ($zone, $east, $north)=|latlon-to-utm('international', :zone($zone_number),
                                           $latitude, $longitude)
 
 For instance, Spain territory goes over zones 29, 30 and 31 but
@@ -600,8 +650,8 @@ returns
 
 but forcing the conversion to zone 30:
 
-    ($zone, $east, $norh)=|latlon-to-utm-force-zone('international',
-                                                   30, 42.882517, -8.541306)
+    ($zone, $east, $norh)=|latlon-to-utm('international', :zone(30),
+                                         42.882517, -8.541306)
 
 returns
 
@@ -702,6 +752,8 @@ Peder Stray for the short MGRS patch
 =head1 COPYRIGHT
 
 Copyright (c) 2000,2002,2004,2007,2010,2013 by Graham Crookham.  All rights reserved.
+
+copyright (c) 2017 by Kevin Pye.
     
 This package is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.             
