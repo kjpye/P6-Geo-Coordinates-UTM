@@ -143,7 +143,7 @@ module Geo::Coordinates::UTM {
            $zone = $zone-number.Str;
        }
    
-       if $ellips ne $lastellips {
+       if $ellips ne $lastellips { # cache the variables which don't change within a zone
            $lastellips = $ellips;
            ($name, $radius, $eccentricity) = |ellipsoid-info $ellips
                or die "Ellipsoid value ($ellips) invalid.";
@@ -255,7 +255,12 @@ module Geo::Coordinates::UTM {
        my $D               = $x/($N1*$k0);
    
        my $Latitude = $phi1rad
-                    - ($N1*tan($phi1rad)/$R1)*($D*$D/2-(5+3*$T1+10*$C1-4*$C1*$C1-9*$eccPrimeSquared)*$D*$D*$D*$D/24+(61+90*$T1+298*$C1+45*$T1*$T1-252*$eccPrimeSquared-3*$C1*$C1)*$D*$D*$D*$D*$D*$D/720);
+                    - ( $N1 * tan($phi1rad) / $R1 )
+                     *( $D * $D / 2 - (5 + 3 * $T1 + 10 * $C1
+                                    - 4 * $C1 * $C1 - 9 * $eccPrimeSquared) * $D * $D * $D * $D / 24
+                                    + (61 + 90 * $T1 + 298 * $C1 + 45 * $T1 * $T1 - 252 * $eccPrimeSquared - 3 * $C1 * $C1)
+                                      * $D * $D * $D * $D * $D * $D / 720
+                      );
           $Latitude = $Latitude * rad2deg;
    
        my $Longitude = ($D
