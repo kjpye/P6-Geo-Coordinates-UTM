@@ -144,6 +144,7 @@ module Geo::Coordinates::UTM {
        }
    
        if $ellips ne $lastellips {
+           $lastellips = $ellips;
            ($name, $radius, $eccentricity) = |ellipsoid-info $ellips
                or die "Ellipsoid value ($ellips) invalid.";
            $eccentprime      = $eccentricity / (1 - $eccentricity);
