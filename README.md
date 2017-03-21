@@ -4,21 +4,21 @@ Geo::Coordinates::UTM - Perl extension for Latitude Longitude conversions.
 #SYNOPSIS
 use Geo::Coordinates::UTM;
 
-my ($zone,$easting,$northing)=|latlon_to_utm($ellipsoid,$latitude,$longitude[,zone=>$zone]);
+my ($zone,$easting,$northing)=|latlon-to-utm($ellipsoid,$latitude,$longitude[,zone=>$zone]);
 
-my ($latitude,$longitude)=|utm_to_latlon($ellipsoid,$zone,$easting,$northing);
+my ($latitude,$longitude)=|utm-to-latlon($ellipsoid,$zone,$easting,$northing);
 
-my ($zone,$easting,$northing)=|mgrs_to_utm($mgrs);
+my ($zone,$easting,$northing)=|mgrs-to-utm($mgrs);
 
-my ($latitude,$longitude)=|mgrs_to_latlon($ellipsoid,$mgrs);
+my ($latitude,$longitude)=|mgrs-to-latlon($ellipsoid,$mgrs);
 
-my ($mgrs)=utm_to_mgrs($zone,$easting,$northing);
+my ($mgrs)=utm-to-mgrs($zone,$easting,$northing);
 
-my ($mgrs)=latlon_to_mgrs($ellipsoid,$latitude,$longitude);
+my ($mgrs)=latlon-to-mgrs($ellipsoid,$latitude,$longitude);
 
-my @ellipsoids=ellipsoid_names;
+my @ellipsoids=ellipsoid-names;
 
-my($name, $r, $sqecc) = |ellipsoid_info 'WGS-84';
+my($name, $r, $sqecc) = |ellipsoid-info 'WGS-84';
 
 #DESCRIPTION
 This module will translate latitude longitude coordinates to Universal
@@ -147,18 +147,18 @@ Arc 1950
 NAD 27
 NAD 83
 
-##ellipsoid_names
+##ellipsoid-names
 
-The ellipsoids can be accessed using ellipsoid_names. To store thes into
+The ellipsoids can be accessed using ellipsoid-names. To store these into
 an array you could use
 
      my @names = ellipsoid_names;
 
-##ellipsoid_info
+##ellipsoid-info
 
 Ellipsoids may be called either by name, or number. To return the
 ellipsoid information, ( "official" name, equator radius and square
-eccentricity) you can use ellipsoid_info and specify a name. The
+eccentricity) you can use ellipsoid-info and specify a name. The
 specified name can be numeric (for compatibility reasons) or a
 more-or-less exact name. Any text between parentheses will be ignored.
 
@@ -168,7 +168,7 @@ more-or-less exact name. Any text between parentheses will be ignored.
      my($name, $r, $sqecc) = ellipsoid_info 'WGS-84 (new specs)';
      my($name, $r, $sqecc) = ellipsoid_info 23;
 
-##latlon_to_utm
+##latlon-to-utm
 
 Latitude values in the southern hemisphere should be supplied as
 negative values (e.g. 30 deg South will be -30). Similarly Longitude
@@ -185,7 +185,7 @@ West
 
 using Clarke 1866 (Ellipsoid 5)
 
-     ($zone,$east,$north)=latlon_to_utm('clarke 1866',57.803055556,-2.788951667)
+     ($zone,$east,$north)=latlon-to-utm('clarke 1866',57.803055556,-2.788951667)
 
 returns
 
@@ -197,7 +197,7 @@ On occasions, it is necessary to map a pair of (latitude, longitude)
 coordinates to a predefined zone. This function allows to select the
 projection zone using an optional named parameter as follows:
 
-     ($zone, $east, $north)=latlon_to_utm('international', zone => $zone_number,
+     ($zone, $east, $north)=latlon-to-utm('international', zone => $zone-number,
                                       $latitude, $longitude)
 
 For instance, Spain territory goes over zones 29, 30 and 31 but
@@ -206,7 +206,7 @@ sometimes it is convenient to use the projection corresponding to zone
 
 Santiago de Compostela is at 42deg 52min 57.06sec North, 8deg 32min 28.70sec West
 
-    ($zone, $east, $norh)=latlon_to_utm('international',  42.882517, -8.541306)
+    ($zone, $east, $norh)=latlon-to-utm('international',  42.882517, -8.541306)
 
 returns
 
@@ -216,7 +216,7 @@ returns
 
 but forcing the conversion to zone 30:
 
-    ($zone, $east, $norh)=latlon_to_utm('international',
+    ($zone, $east, $norh)=latlon-to-utm('international',
                                         zone => 30, 42.882517, -8.541306)
 
 returns
@@ -225,11 +225,11 @@ returns
     $east = 47404.442
     $north = 4762771.704
 
-##utm_to_latlon
+##utm-to-latlon
 
 Reversing the above example,
 
-     ($latitude,$longitude)=utm_to_latlon(5,30V,512533.364651484,6409932.13416127)
+     ($latitude,$longitude)=utm-to-latlon(5,30V,512533.364651484,6409932.13416127)
 
 returns
 
@@ -241,7 +241,7 @@ which equates to
      latitude  57deg 49min 59.000sec North
      longitude 02deg 47min 20.226sec West
 
-##latlon_to_mgrs
+##latlon-to-mgrs
 
 Latitude values in the southern hemisphere should be supplied as negative values (e.g. 30 deg South will be -30). Similarly Longitude values West of the meridian should also be supplied as negative values. Both latitude and longitude should not be entered as deg,min,sec but as their decimal equivalent, e.g. 30 deg 12 min 22.432 sec should be entered as 30.2062311
 
@@ -252,29 +252,29 @@ For latitude  57deg 49min 59.000sec North
 
 using WGS84 (Ellipsoid 23)
 
-     ($mgrs)=latlon_to_mgrs(23,57.8030590197684,-2.788956799)
+     ($mgrs)=latlon-to-mgrs(23,57.8030590197684,-2.788956799)
 
 returns 
 
      $mgrs  = 30VWK1254306804
 
-##mgrs_to_latlon
+##mgrs-to-latlon
 
 Reversing the above example,
 
-     ($latitude,$longitude)=mgrs_to_latlon(23,'30VWK1254306804')
+     ($latitude,$longitude)=mgrs-to-latlon(23,'30VWK1254306804')
 
 returns
 
      $latitude  = 57.8030590197684
      $longitude = -2.788956799645
 
-##mgrs_to_utm
+##mgrs-to-utm
 
 Similarly it is possible to convert MGRS directly to UTM
 
-
 #AUTHOR
+Kevin Pye, Kevin.Pye@gmail.com
 Graham Crookham, grahamc@cpan.org
 
 #THANKS
@@ -297,6 +297,7 @@ Peder Stray for the short MGRS patch
 
 #COPYRIGHT
 Copyright (c) 2000,2002,2004,2007,2010,2013 by Graham Crookham. All rights reserved.
+Copyright (c) 2017 by Kevin Pye. All rights reserved.
 
 This package is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
