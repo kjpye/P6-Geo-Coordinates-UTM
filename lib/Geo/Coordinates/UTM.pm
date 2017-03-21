@@ -143,7 +143,7 @@ module Geo::Coordinates::UTM {
            $zone = $zone-number.Str;
        }
    
-       if $ellips ne $lastellips { # cache the variables which don't change with a different ellipse
+       if $ellips ne $lastellips { # cache the variables which don't change with the same ellipse
            $lastellips = $ellips;
            ($name, $radius, $eccentricity) = |ellipsoid-info $ellips
                or die "Ellipsoid value ($ellips) invalid.";
