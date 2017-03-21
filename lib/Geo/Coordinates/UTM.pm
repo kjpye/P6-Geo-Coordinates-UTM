@@ -126,7 +126,7 @@ module Geo::Coordinates::UTM {
    # Returns UTM Zone, UTM Easting, UTM Northing
    
    sub latlon-to-utm(Str $ellips, Real $latitude, Real $longitude, Str :$zone is copy) is export {
-       die "Longitude value ($longitude) invalid."
+       fail "Longitude value ($longitude) invalid."
            unless -180 <= $longitude <= 180;
    
        my $long2 = $longitude - (($longitude + 180)/360).Int * 360;
@@ -136,7 +136,7 @@ module Geo::Coordinates::UTM {
            $zone ~~ m:i/ ^ (\d+) <[CDEFGHJKLMNPQRSTUVWX]> ? $ /;
            $zone-number = ~$/[0];
    
-           die "Zone value ($zone) invalid."
+           fail "Zone value ($zone) invalid."
                unless $zone-number.defined && $zone-number <= 60;
        } else {
            $zone-number  = _latlon-zone-number($latitude, $long2); 
@@ -146,7 +146,7 @@ module Geo::Coordinates::UTM {
        if $ellips ne $lastellips { # cache the variables which don't change with the same ellipse
            $lastellips = $ellips;
            ($name, $radius, $eccentricity) = |ellipsoid-info $ellips
-               or die "Ellipsoid value ($ellips) invalid.";
+               or fail "Ellipsoid value ($ellips) invalid.";
            $eccentprime      = $eccentricity / (1 - $eccentricity);
            $k1 = $radius * ( 1 - $eccentricity/4
                    - 3 * $eccentricity * $eccentricity / 64
@@ -212,7 +212,7 @@ module Geo::Coordinates::UTM {
          !! (-56 >  $latitude >= -64) ?? 'E'
          !! (-64 >  $latitude >= -72) ?? 'D'
          !! (-72 >  $latitude >= -80) ?? 'C'
-         !! die "Latitude ($latitude) out of UTM range.";
+         !! fail "Latitude ($latitude) out of UTM range.";
    
        $zone ~= $utm-letter;
    
@@ -225,13 +225,13 @@ module Geo::Coordinates::UTM {
    
    sub utm-to-latlon(Str $ellips, Str $zone, Real $easting, Real $northing) is export {
        my ($name, $radius, $eccentricity) = |ellipsoid-info $ellips
-           or die "Ellipsoid value ($ellips) invalid.";
+           or fail "Ellipsoid value ($ellips) invalid.";
           
        $zone              ~~ /^(\d+)(.*)/;
        my $zone-number     = $/[0];
        my Str $zone-letter = $/[1].Str.uc;
    
-       die "UTM zone ($zone-letter) invalid."
+       fail "UTM zone ($zone-letter) invalid."
           unless _valid-utm-zone $zone-letter;
    
        my $k0 = 0.9996;
@@ -285,7 +285,7 @@ module Geo::Coordinates::UTM {
        $zone-number        = $/[0];
        $zone-letter        = $/[1].Str;
    
-      die "UTM zone ($zone-letter) invalid."
+      fail "UTM zone ($zone-letter) invalid."
         unless _valid-utm-zone $zone-letter;
    
       my $northing-zones = "ABCDEFGHJKLMNPQRSTUV";
@@ -314,10 +314,10 @@ module Geo::Coordinates::UTM {
                          =  ( $mgrs-zone == 1) ?? 'ABCDEFGH'
                          !! ( $mgrs-zone == 2) ?? 'JKLMNPQR'
                          !! ( $mgrs-zone == 3) ?? 'STUVWXYZ'
-                         !! die "Could not calculate MGRS zone.";
+                         !! fail "Could not calculate MGRS zone.";
       $num-east--;
       my $lett-east      = $easting-zones.substr($num-east,1)
-                         or die "Could not detect Easting Zone for MGRS coordinate";
+                         or fail "Could not detect Easting Zone for MGRS coordinate";
    
       my $MGRS           = "$zone$lett-east$lett-north$mgrs-east$mgrs-north";
      ($MGRS);
@@ -339,20 +339,20 @@ module Geo::Coordinates::UTM {
          $zone-number     = $/[0];
          $zone-letter     = $/[1].Str;
    
-      die "UTM zone ($zone-letter) invalid."
+      fail "UTM zone ($zone-letter) invalid."
         unless _valid-utm-zone $zone-letter;
    
       my $first-letter = $mgrs-string.substr(3,1);
-      die "MGRS zone ($first-letter) invalid."
+      fail "MGRS zone ($first-letter) invalid."
         unless $first-letter ~~ /<[ABCDEFGHJKLMNPQRSTUVWXYZ]>/;
    
       my $second-letter = $mgrs-string.substr(4,1);
-      die "MGRS zone ($second-letter) invalid."
+      fail "MGRS zone ($second-letter) invalid."
         unless $second-letter ~~ /<[ABCDEFGHJKLMNPQRSTUV]>/;
    
       my $coords    = $mgrs-string.substr(5, Inf);
       my $coord-len = $coords.chars;
-      die "MGRS coords ($coords) invalid."
+      fail "MGRS coords ($coords) invalid."
         unless (0 < $coord-len <= 10) and !($coord-len % 2);
       
       $coord-len  = ($coord-len/2).Int;
@@ -365,15 +365,15 @@ module Geo::Coordinates::UTM {
         =  ( $first-letter ~~ /<[ABCDEFGH]>/) ?? index('ABCDEFGH',$first-letter)
         !! ( $first-letter ~~ /<[JKLMNPQR]>/) ?? index('JKLMNPQR',$first-letter)
         !! ( $first-letter ~~ /<[STUVWXYZ]>/) ?? index('STUVWXYZ',$first-letter)
-        !! die "Could not calculate MGRS Easting zone.";
-      die "MGRS Letter $first-letter invalid." if $east-pos < 0;
+        !! fail "Could not calculate MGRS Easting zone.";
+      fail "MGRS Letter $first-letter invalid." if $east-pos < 0;
       $east-pos++;
       $east-pos *= 100000;
       $x-coord  += $east-pos;
    
       my $northing-zones = "ABCDEFGHJKLMNPQRSTUV";
       my $north-pos      = $northing-zones.index($second-letter);
-      die "MGRS Letter $second-letter invalid." if $north-pos < 0;
+      fail "MGRS Letter $second-letter invalid." if $north-pos < 0;
       $north-pos++;
       $north-pos -= 5 if not ($zone-number % 2);
       $north-pos += 20 until $north-pos > 0;
