@@ -94,7 +94,7 @@ module Geo::Coordinates::UTM {
    sub ellipsoid-info(Str $id) is export {
        my $el = $id !~~ m/\D/
               ?? @Ellipsoid[$id-1]   # old system counted from 1
-              !! @Ellipsoid{$id} || %Ellipsoid{_cleanup-name $id};
+              !! %Ellipsoid{$id} || %Ellipsoid{_cleanup-name $id};
    
        $el.defined ?? @$el !! ();
    }
