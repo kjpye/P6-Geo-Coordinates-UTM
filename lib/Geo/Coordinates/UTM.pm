@@ -13,7 +13,7 @@ module Geo::Coordinates::UTM {
        $copy .= lc;
        $copy ~~ s:g/ \( <[-)]>* \) //;   # remove text between parentheses
        $copy ~~ s:g/ <[\s-]> //;         # no blanks or dashes
-       return $copy;
+       $copy;
    }
    
    # Ellipsoid array (name,equatorial radius,square of eccentricity)
