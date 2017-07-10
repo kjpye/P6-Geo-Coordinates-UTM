@@ -40,3 +40,13 @@ Revision history for perl 5 version on which this versions is closely based:
 0.11 Tue May 21 13:26:14 2013
 	- Added NAD27 and NAD83 ellipsoids
 	
+First Perl6 version
+0.2.0 Mon Jul 10 13:29:16 2017
+	- Converted syntax to Perl 6
+	- Renamed all functions with embedded underscores to use dashes to better fit Perl6 ecosystem
+	- Removed _force_zone variants
+	- Added optional named argument "zone" to replace _force_zone variants
+	- Cache those parts of the calculations dependent only on current ellipsoid
+	- Update documentation to match code
+	- Rewrote description of Mercator projection
+
