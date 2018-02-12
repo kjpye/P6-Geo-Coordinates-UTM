@@ -11,7 +11,7 @@ module Geo::Coordinates::UTM {
    # that a match is found.
    sub _cleanup-name(Str $copy is copy) {
        $copy .= lc;
-       $copy ~~ s:g/ \( <[-)]>* \) //;   # remove text between parentheses
+       $copy ~~ s:g/ \( <-[)]>* \) //;   # remove text between parentheses
        $copy ~~ s:g/ <[\s-]> //;         # no blanks or dashes
        $copy;
    }
