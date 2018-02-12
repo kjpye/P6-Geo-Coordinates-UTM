@@ -152,7 +152,7 @@ NAD 83
 The ellipsoids can be accessed using ellipsoid-names. To store these into
 an array you could use
 
-     my @names = ellipsoid_names;
+     my @names = ellipsoid-names;
 
 ##ellipsoid-info
 
@@ -162,11 +162,11 @@ eccentricity) you can use ellipsoid-info and specify a name. The
 specified name can be numeric (for compatibility reasons) or a
 more-or-less exact name. Any text between parentheses will be ignored.
 
-     my($name, $r, $sqecc) = ellipsoid_info 'wgs84';
-     my($name, $r, $sqecc) = ellipsoid_info 'WGS 84';
-     my($name, $r, $sqecc) = ellipsoid_info 'WGS-84';
-     my($name, $r, $sqecc) = ellipsoid_info 'WGS-84 (new specs)';
-     my($name, $r, $sqecc) = ellipsoid_info 23;
+     my($name, $r, $sqecc) = ellipsoid-info 'wgs84';
+     my($name, $r, $sqecc) = ellipsoid-info 'WGS 84';
+     my($name, $r, $sqecc) = ellipsoid-info 'WGS-84';
+     my($name, $r, $sqecc) = ellipsoid-info 'WGS-84 (new specs)';
+     my($name, $r, $sqecc) = ellipsoid-info 23;
 
 ##latlon-to-utm
 
@@ -285,7 +285,7 @@ testing.
 
 Michael Slater for discovering the Escape \Q bug.
 
-Mark Overmeer for the ellipsoid_info routines and code review.
+Mark Overmeer for the ellipsoid-info routines and code review.
 
 Lok Yan for the >72deg. N bug.
 
