@@ -9,7 +9,7 @@ module Geo::Coordinates::UTM {
    
    # remove all markup from an ellipsoid name, to increase the chance
    # that a match is found.
-   sub _cleanup-name(Str $copy is copy) {
+   sub cleanup-name(Str $copy is copy) {
        $copy .= lc;
        $copy ~~ s:g/ \( <-[)]>* \) //;   # remove text between parentheses
        $copy ~~ s:g/ <[\s-]> //;         # no blanks or dashes
@@ -69,11 +69,11 @@ module Geo::Coordinates::UTM {
      for @Ellipsoid -> $el {
          my (Str $name, Real $eqrad, Real $eccsq) = @$el;
          %Ellipsoid{$name} = $el;
-         %Ellipsoid{_cleanup-name $name} = $el;
+         %Ellipsoid{cleanup-name $name} = $el;
      }
    }
    
-   sub _valid-utm-zone(Str $char) {
+   sub valid-utm-zone(Str $char) {
        ? $char ~~ /<[CDEFGHJKLMNPQRSTUVWX]>/;
    }
    
@@ -85,21 +85,21 @@ module Geo::Coordinates::UTM {
    # Returns "official" name, equator radius and square eccentricity
    # The specified name can be numeric (for compatibility reasons) or
    # a more-or-less exact name
-   # Examples:   my($name, $r, $sqecc) = ellipsoid_info 'wgs84';
-   #             my($name, $r, $sqecc) = ellipsoid_info 'WGS 84';
-   #             my($name, $r, $sqecc) = ellipsoid_info 'WGS-84';
-   #             my($name, $r, $sqecc) = ellipsoid_info 'WGS-84 (new specs)';
-   #             my($name, $r, $sqecc) = ellipsoid_info 22;
+   # Examples:   my($name, $r, $sqecc) = ellipsoid-info 'wgs84';
+   #             my($name, $r, $sqecc) = ellipsoid-info 'WGS 84';
+   #             my($name, $r, $sqecc) = ellipsoid-info 'WGS-84';
+   #             my($name, $r, $sqecc) = ellipsoid-info 'WGS-84 (new specs)';
+   #             my($name, $r, $sqecc) = ellipsoid-info 22;
    
    sub ellipsoid-info(Str $id) is export {
        my $el = $id !~~ m/\D/
               ?? @Ellipsoid[$id-1]   # old system counted from 1
-              !! %Ellipsoid{$id} || %Ellipsoid{_cleanup-name $id};
+              !! %Ellipsoid{$id} || %Ellipsoid{cleanup-name $id};
    
        $el.defined ?? @$el !! ();
    }
    
-   sub _latlon-zone-number(Real $latitude, Real $long2) {
+   sub latlon-zone-number(Real $latitude, Real $long2) {
        my $zone = ( ($long2 + 180)/6).Int + 1;
        if 56 <= $latitude < 64.0 && 3.0 <= $long2 < 12.0 {
            $zone = 32;
@@ -139,7 +139,7 @@ module Geo::Coordinates::UTM {
            fail "Zone value ($zone) invalid."
                unless $zone-number.defined && $zone-number <= 60;
        } else {
-           $zone-number  = _latlon-zone-number($latitude, $long2); 
+           $zone-number  = latlon-zone-number($latitude, $long2); 
            $zone = $zone-number.Str;
        }
    
@@ -159,22 +159,22 @@ module Geo::Coordinates::UTM {
            $k4 = $radius * (35 * $eccentricity * $eccentricity * $eccentricity / 3072);
        }
    
-       my $lat_radian       = deg2rad * $latitude;
-       my $long_radian      = deg2rad * $long2;
+       my $lat-radian       = deg2rad * $latitude;
+       my $long-radian      = deg2rad * $long2;
    
        my $k0               = 0.9996;                  # scale
    
        my $longorigin       = ($zone-number - 1)*6 - 180 + 3;
        my $longoriginradian = deg2rad * $longorigin;
        
-       my $N = $radius / sqrt(1-$eccentricity * sin($lat_radian)*sin($lat_radian));
-       my $T = tan($lat_radian) * tan($lat_radian);
-       my $C = $eccentprime * cos($lat_radian)*cos($lat_radian);
-       my $A = cos($lat_radian) * ($long_radian - $longoriginradian);
-       my $M = $k1 * $lat_radian
-             - $k2 * sin(2 * $lat_radian)
-             + $k3 * sin(4 * $lat_radian)
-             - $k4 * sin(6 * $lat_radian)
+       my $N = $radius / sqrt(1-$eccentricity * sin($lat-radian)*sin($lat-radian));
+       my $T = tan($lat-radian) * tan($lat-radian);
+       my $C = $eccentprime * cos($lat-radian)*cos($lat-radian);
+       my $A = cos($lat-radian) * ($long-radian - $longoriginradian);
+       my $M = $k1 * $lat-radian
+             - $k2 * sin(2 * $lat-radian)
+             + $k3 * sin(4 * $lat-radian)
+             - $k4 * sin(6 * $lat-radian)
              ;
    
        my $utm-easting  = $k0*$N*($A+(1-$T+$C)*$A*$A*$A/6
@@ -182,7 +182,7 @@ module Geo::Coordinates::UTM {
                         + 500000.0;
    
        my $utm-northing = $k0 * ( $M
-                                  + $N * tan($lat_radian)
+                                  + $N * tan($lat-radian)
                                        * ( $A*$A/2
                                          + (5 - $T + 9*$C + 4*$C*$C)*$A*$A*$A*$A/24
                                          + (61 - 58*$T + $T*$T + 600*$C - 330*$eccentprime) * $A*$A*$A*$A*$A*$A/720
@@ -232,7 +232,7 @@ module Geo::Coordinates::UTM {
        my Str $zone-letter = $/[1].Str.uc;
    
        fail "UTM zone ($zone-letter) invalid."
-          unless _valid-utm-zone $zone-letter;
+          unless valid-utm-zone $zone-letter;
    
        my $k0 = 0.9996;
        my $x  = $easting - 500000; # Remove Longitude offset
@@ -286,7 +286,7 @@ module Geo::Coordinates::UTM {
        $zone-letter        = $/[1].Str;
    
       fail "UTM zone ($zone-letter) invalid."
-        unless _valid-utm-zone $zone-letter;
+        unless valid-utm-zone $zone-letter;
    
       my $northing-zones = "ABCDEFGHJKLMNPQRSTUV";
       my $rnd-north      = sprintf("%d",$northing);
@@ -340,7 +340,7 @@ module Geo::Coordinates::UTM {
          $zone-letter     = $/[1].Str;
    
       fail "UTM zone ($zone-letter) invalid."
-        unless _valid-utm-zone $zone-letter;
+        unless valid-utm-zone $zone-letter;
    
       my $first-letter = $mgrs-string.substr(3,1);
       fail "MGRS zone ($first-letter) invalid."
@@ -637,7 +637,7 @@ returns
 On occasions, it is necessary to map a pair of (latitude, longitude)
 coordinates to a predefined zone. This is done by p[roviding a value for the optional named parameter zone as follows:
 
-     ($zone, $east, $north)=|latlon-to-utm('international', :zone($zone_number),
+     ($zone, $east, $north)=|latlon-to-utm('international', :zone($zone-number),
                                           $latitude, $longitude)
 
 For instance, Spain territory goes over zones 29, 30 and 31 but
@@ -743,7 +743,7 @@ Felipe Mendonca Pimenta for helping out with the Southern hemisphere testing.
 
 Michael Slater for discovering the Escape \Q bug.
 
-Mark Overmeer for the ellipsoid_info routines and code review.
+Mark Overmeer for the ellipsoid-info routines and code review.
 
 Lok Yan for the >72deg. N bug.
 
