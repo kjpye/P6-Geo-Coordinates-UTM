@@ -174,7 +174,7 @@ module Geo::Coordinates::UTM {
        my $M = $k1 * $lat-radian
              - $k2 * sin(2 * $lat-radian)
              + $k3 * sin(4 * $lat-radian)
-             - $k4 * sin(6 * $lat-radian)
+             - $k4 * sin(6 * $lat-radian);
 
        my $utm-easting  = $k0*$N*($A+(1-$T+$C)*$A*$A*$A/6
                         + (5-18*$T+$T*$T+72*$C-58*$eccentprime)*$A*$A*$A*$A*$A/120)
@@ -282,7 +282,7 @@ module Geo::Coordinates::UTM {
        my Str $zone-letter = $zone-number;
        $zone-number       ~~ s/^(\d+)(.*)//;
        $zone-number        = +$0;
-       $zone-letter        = ~$1
+       $zone-letter        = ~$1;
 
       fail "UTM zone ($zone-letter) invalid."
         unless valid-utm-zone $zone-letter;
@@ -599,13 +599,17 @@ The Ellipsoids available are as follows:
 
 =head2 ellipsoid-names
 
-The ellipsoids can be accessed using  ellipsoid-names. To store thes into an array you could use 
+The ellipsoids can be accessed using  ellipsoid-names. To store these into an array you could use 
 
      my @names = ellipsoid-names;
 
 =head2 ellipsoid-info
 
-Ellipsoids may be called either by name, or number. To return the ellipsoid information, ( "official" name, equator radius and square eccentricity) you can use ellipsoid-info and specify a name. The specified name can be numeric (for compatibility reasons) or a more-or-less exact name. Any text between parentheses will be ignored.
+Ellipsoids may be called either by name, or number. To return the ellipsoid information,
+( "official" name, equator radius and square eccentricity)
+you can use ellipsoid-info and specify a name. The specified name can be numeric
+(for compatibility reasons) or a more-or-less exact name.
+Any text between parentheses will be ignored.
 
      my($name, $r, $sqecc) = |ellipsoid-info 'wgs84';
      my($name, $r, $sqecc) = |ellipsoid-info 'WGS 84';
@@ -615,9 +619,14 @@ Ellipsoids may be called either by name, or number. To return the ellipsoid info
 
 =head2 latlon-to-utm
 
-Latitude values in the southern hemisphere should be supplied as negative values (e.g. 30 deg South will be -30). Similarly Longitude values West of the meridian should also be supplied as negative values. Both latitude and longitude should not be entered as deg,min,sec but as their decimal equivalent, e.g. 30 deg 12 min 22.432 sec should be entered as 30.2062311
+Latitude values in the southern hemisphere should be supplied as negative values
+(e.g. 30 deg South will be -30). Similarly Longitude values West of the meridian
+should also be supplied as negative values. Both latitude and longitude should
+not be entered as deg,min,sec but as their decimal equivalent,
+e.g. 30 deg 12 min 22.432 sec should be entered as 30.2062311
 
-The ellipsoid value should correspond to one of the numbers above, e.g. to use WGS-84, the ellipsoid value should be 23
+The ellipsoid value should correspond to one of the numbers above,
+e.g. to use WGS-84, the ellipsoid value should be 23
 
 For latitude  57deg 49min 59.000sec North
     longitude 02deg 47min 20.226sec West
@@ -633,7 +642,7 @@ returns
      $north = 6406592.20049111
 
 On occasions, it is necessary to map a pair of (latitude, longitude)
-coordinates to a predefined zone. This is done by p[roviding a value for the optional named parameter zone as follows:
+coordinates to a predefined zone. This is done by providing a value for the optional named parameter zone as follows:
 
      ($zone, $east, $north)=|latlon-to-utm('international', :zone($zone-number),
                                           $latitude, $longitude)
@@ -682,7 +691,11 @@ returns
 
 =head2 latlon-to-mgrs
 
-Latitude values in the southern hemisphere should be supplied as negative values (e.g. 30 deg South will be -30). Similarly Longitude values West of the meridian should also be supplied as negative values. Both latitude and longitude should not be entered as deg,min,sec but as their decimal equivalent, e.g. 30 deg 12 min 22.432 sec should be entered as 30.2062311
+Latitude values in the southern hemisphere should be supplied as negative values
+(e.g. 30 deg South will be -30). Similarly Longitude values West of the meridian
+should also be supplied as negative values. Both latitude and longitude should
+not be entered as deg,min,sec but as their decimal equivalent,
+e.g. 30 deg 12 min 22.432 sec should be entered as 30.2062311
 
 The ellipsoid value should correspond to one of the numbers above, e.g. to use WGS-84, the ellipsoid value should be 23
 
@@ -733,6 +746,8 @@ returns
 
 Graham Crookham, grahamc@cpan.org
 
+Kevin Pye, kjpye@cpan.org
+
 =head1 THANKS
 
 Thanks go to the following:
@@ -757,7 +772,7 @@ Peder Stray for the short MGRS patch
 
 Copyright (c) 2000,2002,2004,2007,2010,2013 by Graham Crookham.  All rights reserved.
 
-copyright (c) 2017 by Kevin Pye.
+copyright (c) 2018 by Kevin Pye.
     
 This package is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.             

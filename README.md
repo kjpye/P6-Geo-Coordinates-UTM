@@ -297,7 +297,7 @@ Peder Stray for the short MGRS patch
 
 #COPYRIGHT
 Copyright (c) 2000,2002,2004,2007,2010,2013 by Graham Crookham. All rights reserved.
-Copyright (c) 2017 by Kevin Pye. All rights reserved.
+Copyright (c) 2018 by Kevin Pye. All rights reserved.
 
 This package is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
