@@ -528,8 +528,6 @@ A description of the available ellipsoids and sample usage of the conversion rou
 
 The Ellipsoids available are as follows:
 
-=over 6
-
 =item 1 Airy
 
 =item 2 Australian National
@@ -594,12 +592,9 @@ The Ellipsoids available are as follows:
 
 =item 32 NAD 83
 
-=back
-
-
 =head2 ellipsoid-names
 
-The ellipsoids can be accessed using  ellipsoid-names. To store these into an array you could use 
+The ellipsoids can be accessed using C<ellipsoid-names>. To store these into an array you could use 
 
      my @names = ellipsoid-names;
 
@@ -607,7 +602,7 @@ The ellipsoids can be accessed using  ellipsoid-names. To store these into an ar
 
 Ellipsoids may be called either by name, or number. To return the ellipsoid information,
 ( "official" name, equator radius and square eccentricity)
-you can use ellipsoid-info and specify a name. The specified name can be numeric
+you can use C<ellipsoid-info> and specify a name. The specified name can be numeric
 (for compatibility reasons) or a more-or-less exact name.
 Any text between parentheses will be ignored.
 

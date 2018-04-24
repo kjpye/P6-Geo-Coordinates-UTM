@@ -1,0 +1,16 @@
+{
+    "meta-version" : "1",
+    "perl"         : "6.c",
+    "name"         : "Geo::Coordinates::UTM",
+    "version"      : "0.2.0",
+    "description"  : "Convert latitude and longitude to UTM and vice versa",
+    "authors"      : [
+                       "Kevin Pye (kjpye@cpan.org)",
+                     ],
+    "depends"      : [],
+    "provides"     : {
+                       "Geo::Coordinates::UTM" : "lib/Geo/Coordinates/UTM.pm"
+                     },
+    "license"      : "Artistic-2.0",
+    "source-url"   : "https://github.com/kjpye/P6-Geo-Coordinates-UTM"
+}
