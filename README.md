@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/kjpye/P6-Geo-Coordinates-UTM.svg?branch=master)](https://travis-ci.org/kjpye/P6-Geo-Coordinates-UTM)
+[![Actions Status](https://github.com/kjpye/P6-Geo-Coordinates-UTM/actions/workflows/test.yml/badge.svg)](https://github.com/kjpye/P6-Geo-Coordinates-UTM/actions)
 
 NAME
 ====
