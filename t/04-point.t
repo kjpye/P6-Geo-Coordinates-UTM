@@ -1,20 +1,12 @@
 use v6;
 use Test; 
 
-plan 7992;
+plan 4995;
 
 # BEGIN { @*INC.push('../lib'); }
 
+use Geo::Geometry;
 use Geo::Coordinates::UTM;
-
-sub fleq ($a, $b, Real $eps = 1e-2) {
-    if (abs($a - $b) < $eps) {
-        return True;
-    }
-    return False;
-}
-
-my $latlon = "CCDEFGHJKLMNPQRSTUVWXX";
 
 my $data = ' #
 # ellipsoid|latitude|longitude|zone|easting|northing
@@ -1027,33 +1019,14 @@ for $data.lines -> $line {
     my Real $longitude = $lo.Real;
     my Real $easting = $ea.Real;
     my Real $northing = $no.Real;
-    my (Str $z, Real $e, Real $n) = |latlon-to-utm($ellipsoid, $latitude.Real, $longitude.Real);
-    ok $z eq $zone, "zone $zone";
-    ok fleq($e, $easting),  "easting $easting";
-    ok fleq($n, $northing), "northing $northing";
-
-    my ($lat, $lon) = |utm-to-latlon($ellipsoid, $z, $easting, $northing);
-    ok fleq($lon, $longitude), "longitude $longitude -> $lon";
-    ok fleq($lat, $latitude),  "latitude $latitude ->? $lat";
-
-    $zone ~~ m/^ (\d+) (\w) /;
-    my ($zone-number, $zone-letter) = ($/[0].Str, $/[1].Str);
-    ($z, $e, $n) = |latlon-to-utm($ellipsoid, zone => $zone-number, $latitude, $longitude);
-    ok $z eq $zone, "fz zone $zone";
-    ok fleq($e, $easting),  "fz easting $easting";
-    ok fleq($n, $northing), "fz northing $northing";
-
-    my $z1 = $zone-number + (-2 + 5.rand).Int;
-    $z1 -= 60 if $z1 > 60;
-    $z1 += 60 if $z1 < 1;
-
-    # Removed these tests because moving the UTM zone
-    # will give different results from the expected values 
-    # and therefore tests will fail.
-    #my $l1 = ($latlon =~ /(.)($zone-letter)(.)/, '')[4.rand];
-    #($z, $e, $n) = |latlon-to-utm($ellipsoid, zone => "$z1$l1", $latitude, $longitude);
-    #($lat, $lon) = |utm-to-latlon($ellipsoid, $z, $e, $n);
-    #fleq($lon, $longitude, "fz longitude (zone $zone) $.");
-    #fleq($lat, $latitude, "fz latitude (zone $zone) $.");
+    my $p = Point.new($longitude, $latitude);
+    my $pointutm = latlon-to-utm($ellipsoid, $p);
+    ok $pointutm.zone eq $zone, "zone $zone";
+    is-approx $pointutm.easting, $easting,  "easting $easting";
+    is-approx $pointutm.northing, $northing, "northing $northing";
+    my $p2 = utm-to-latlon($ellipsoid, $pointutm);
+    is-approx $p2.x, $lo.Real;
+    is-approx $p2.y, $la.Real;
 }
 
+done-testing;

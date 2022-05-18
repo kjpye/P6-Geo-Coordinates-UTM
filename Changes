@@ -1,4 +1,8 @@
-Revision history for Perl extension Geo::Coordinates::UTM.
+Revision history for Geo::Coordinates::UTM
+
+{{$NEXT}}
+	- Add support for Geo::Geometry objects, including lines and polygons
+	- Split ellipsoids out into Geo::Ellipsoids
 
 0.1.0 Thu Sep 11 00:35:48 2014
 	- original perl6 version based on perl 5 version 0.11
