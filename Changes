@@ -2,6 +2,9 @@ Revision history for Geo::Coordinates::UTM
 
 {{$NEXT}}
 
+0.3.1  2022-05-21T14:13:18+10:00
+	- Pull ellipsoid code back in from Geo::Ellipsoids (nameing conflict)
+
 0.3.0  2022-05-18T17:06:32+10:00
 	- Add support for Geo::Geometry objects, including lines and polygons
 	- Split ellipsoids out into Geo::Ellipsoids
